@@ -51,8 +51,12 @@ export default function MainAppShell() {
   }, [activeTab]);
 
   useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('navigate_tab', (tab: TabName) => {
-      setActiveTab(tab);
+    const sub = DeviceEventEmitter.addListener('navigate_tab', (tab: string) => {
+      if (tab === 'map' || tab === 'campus_map') {
+        setActiveTab('campus_map');
+      } else if (['dashboard', 'subjects', 'timetable', 'analytics', 'profile'].includes(tab)) {
+        setActiveTab(tab as TabName);
+      }
     });
     return () => sub.remove();
   }, []);

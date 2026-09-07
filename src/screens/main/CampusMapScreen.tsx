@@ -56,6 +56,7 @@ export default function CampusMapScreen() {
   const [isLiveTracking, setIsLiveTracking] = useState(false);
   const [followUser, setFollowUser] = useState(false);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; name: string } | null>(null);
+  const [viewportSize, setViewportSize] = useState({ width: SCREEN_WIDTH, height: SCREEN_HEIGHT });
 
   // ─── Gesture Shared Values ─────────────────────────────────────────
   const scale = useSharedValue(0.85);
@@ -82,38 +83,69 @@ export default function CampusMapScreen() {
   };
 
   const handleMapTap = (screenX: number, screenY: number) => {
-    // Exact touch-to-SVG transformation
+    // Exact touch-to-SVG transformation using dynamically measured viewport size
     const svgCenterX = MAP_IMAGE_WIDTH / 2;   // 400
     const svgCenterY = MAP_IMAGE_HEIGHT / 2;  // 325
-    const viewportCenterX = SCREEN_WIDTH / 2;
-    const viewportCenterY = SCREEN_HEIGHT / 2;
+    const viewportCenterX = viewportSize.width / 2;
+    const viewportCenterY = viewportSize.height / 2;
 
     const svgX = (screenX - viewportCenterX - translateX.value) / scale.value + svgCenterX;
     const svgY = (screenY - viewportCenterY - translateY.value) / scale.value + svgCenterY;
 
-    // Strict boundary test: circle or polygon
     let hitBuilding: CampusBuilding | null = null;
+    let minDistance = Infinity;
+    let nearestBuilding: CampusBuilding | null = null;
 
     for (const b of CAMPUS_BUILDINGS) {
+      const heightFactor = b.heightFactor || 1;
+      const dx = is3D ? -heightFactor * 6 : 0;
+      const dy = is3D ? -heightFactor * 12 : 0;
+
+      // 1. Circle test (with 8px touch margin)
       if (b.shapeType === 'circle' && b.circle) {
-        const dist = Math.hypot(svgX - b.circle.cx, svgY - b.circle.cy);
-        if (dist <= b.circle.r + 2) {
-          hitBuilding = b;
-          break;
-        }
-      } else if (b.polygon) {
-        const pts = parsePoints(b.polygon);
-        if (isPointInPolygon(svgX, svgY, pts)) {
+        const dist = Math.hypot(svgX - (b.circle.cx + dx), svgY - (b.circle.cy + dy));
+        if (dist <= b.circle.r + 8) {
           hitBuilding = b;
           break;
         }
       }
+
+      // 2. Base polygon test
+      if (b.polygon) {
+        const basePts = parsePoints(b.polygon);
+        if (isPointInPolygon(svgX, svgY, basePts)) {
+          hitBuilding = b;
+          break;
+        }
+
+        // 3. 3D roof polygon test (if 3D mode is active)
+        if (is3D && heightFactor > 0) {
+          const roofPts = basePts.map(p => ({ x: p.x + dx, y: p.y + dy }));
+          if (isPointInPolygon(svgX, svgY, roofPts)) {
+            hitBuilding = b;
+            break;
+          }
+        }
+      }
+
+      // 4. Centroid proximity check (within 35px of building center / number badge)
+      const bCenter = { x: b.x + dx, y: b.y + dy };
+      const distToCenter = Math.hypot(svgX - bCenter.x, svgY - bCenter.y);
+      if (distToCenter < minDistance) {
+        minDistance = distToCenter;
+        nearestBuilding = b;
+      }
+    }
+
+    // Fallback: If tapped within 35px of a building's label or edge, select it
+    if (!hitBuilding && nearestBuilding && minDistance <= 35) {
+      hitBuilding = nearestBuilding;
     }
 
     if (hitBuilding) {
       handleSelectBuilding(hitBuilding);
     } else {
-      // Tapped open ground / road — dismiss detail sheet
+      // Tapped open ground — dismiss detail sheet
       if (selectedBuilding) {
         setSelectedBuilding(null);
         setTooltip(null);
@@ -125,20 +157,20 @@ export default function CampusMapScreen() {
 
   // ─── Gestures ──────────────────────────────────────────────────────
   const tapGesture = Gesture.Tap()
-    .maxDistance(15)
+    .maxDistance(25)
+    .maxDuration(350)
     .runOnJS(true)
     .onEnd((e) => {
       handleMapTap(e.x, e.y);
     });
 
   const panGesture = Gesture.Pan()
-    .minDistance(8)
+    .minDistance(12)
     .maxPointers(1)
     .onUpdate((e) => {
       translateX.value = savedTranslateX.value + e.translationX;
       translateY.value = savedTranslateY.value + e.translationY;
       if (followUser) {
-        // User manually moved camera, release follow-me
         runOnJS(setFollowUser)(false);
       }
     })
@@ -155,7 +187,7 @@ export default function CampusMapScreen() {
       savedScale.value = scale.value;
     });
 
-  const composedGesture = Gesture.Race(
+  const composedGesture = Gesture.Simultaneous(
     tapGesture,
     Gesture.Simultaneous(panGesture, pinchGesture)
   );
@@ -609,21 +641,31 @@ export default function CampusMapScreen() {
       )}
 
       {/* Map Canvas */}
-      <GestureDetector gesture={composedGesture}>
-        <Animated.View style={[styles.mapViewport, animatedMapStyle]}>
-          <CampusSvgCanvas
-            width={MAP_IMAGE_WIDTH}
-            height={MAP_IMAGE_HEIGHT}
-            buildings={filteredBuildings}
-            selectedBuildingId={selectedBuilding?.id || null}
-            is3D={is3D}
-            activeFloor={floor}
-            route={route}
-            livePosition={livePosition}
-            onBuildingPress={handleSelectBuilding}
-          />
-        </Animated.View>
-      </GestureDetector>
+      <View
+        style={styles.mapContainer}
+        onLayout={(e) => {
+          const { width, height } = e.nativeEvent.layout;
+          if (width > 0 && height > 0) {
+            setViewportSize({ width, height });
+          }
+        }}
+      >
+        <GestureDetector gesture={composedGesture}>
+          <Animated.View style={[styles.mapViewport, animatedMapStyle]}>
+            <CampusSvgCanvas
+              width={MAP_IMAGE_WIDTH}
+              height={MAP_IMAGE_HEIGHT}
+              buildings={filteredBuildings}
+              selectedBuildingId={selectedBuilding?.id || null}
+              is3D={is3D}
+              activeFloor={floor}
+              route={route}
+              livePosition={livePosition}
+              onBuildingPress={handleSelectBuilding}
+            />
+          </Animated.View>
+        </GestureDetector>
+      </View>
 
       {/* Building Detail Sheet */}
       {selectedBuilding && (
@@ -794,6 +836,10 @@ const styles = StyleSheet.create({
     color: textColors.primary,
     fontWeight: 'bold',
     fontSize: 13,
+  },
+  mapContainer: {
+    flex: 1,
+    overflow: 'hidden',
   },
   mapViewport: {
     flex: 1,

@@ -138,7 +138,7 @@ export const CampusSvgCanvas: React.FC<CampusSvgCanvasProps> = ({
     const isCircle = building.shapeType === 'circle' && building.circle;
 
     return (
-      <G key={building.id}>
+      <G key={building.id} onPress={() => onBuildingPress(building)}>
         {/* ── Shadow ── */}
         {is3D && isCircle && (
           <Circle
