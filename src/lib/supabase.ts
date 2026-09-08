@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from './database.types';
+import { GuestModeService } from '../services/GuestModeService';
 
 const ExpoAsyncStorageAdapter = {
   getItem: (key: string) => AsyncStorage.getItem(key),
@@ -34,7 +35,65 @@ export function resetSupabaseClient() {
 
 export const supabase: SupabaseClient<Database> = new Proxy({} as SupabaseClient<Database>, {
   get(_target, prop) {
+    if (prop === 'auth') {
+      const activeAuth = activeClient.auth;
+      return new Proxy(activeAuth, {
+        get(authTarget, authProp) {
+          if (GuestModeService.isActive()) {
+            if (authProp === 'getSession') {
+              return async () => ({ data: { session: GuestModeService.getGuestSession() }, error: null });
+            }
+            if (authProp === 'getUser') {
+              return async () => ({ data: { user: GuestModeService.getGuestSession().user }, error: null });
+            }
+            if (authProp === 'signOut') {
+              return async () => {
+                GuestModeService.disable();
+                return { error: null };
+              };
+            }
+          }
+          if (authProp === 'onAuthStateChange') {
+            return (callback: any) => {
+              const guestUnsub = GuestModeService.subscribeAuth((event, session) => {
+                callback(event, session);
+              });
+              const { data } = activeAuth.onAuthStateChange(callback);
+              return {
+                data: {
+                  subscription: {
+                    unsubscribe: () => {
+                      guestUnsub();
+                      data?.subscription?.unsubscribe();
+                    },
+                  },
+                },
+              };
+            };
+          }
+          const val = (activeAuth as any)[authProp];
+          return typeof val === 'function' ? val.bind(activeAuth) : val;
+        },
+      });
+    }
+
+    if (GuestModeService.isActive()) {
+      if (prop === 'from') {
+        return (table: string) => GuestModeService.createQuery(table);
+      }
+      if (prop === 'channel') {
+        return () => ({
+          on: () => ({ subscribe: () => ({}) }),
+          subscribe: () => ({}),
+        });
+      }
+      if (prop === 'removeChannel') {
+        return async () => {};
+      }
+    }
+
     const val = (activeClient as any)[prop];
     return typeof val === 'function' ? val.bind(activeClient) : val;
   },
 });
+

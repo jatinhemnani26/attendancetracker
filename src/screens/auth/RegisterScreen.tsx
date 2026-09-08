@@ -8,7 +8,7 @@
  * - PRD 3.5 compliant: optional name, required email + password
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,22 +20,30 @@ import {
   ScrollView,
   ActivityIndicator,
   Animated,
+  Image,
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { canvas, glass, border, text, accent, feedback, shadow } from '../../theme/colors';
 import { textStyle, fontFamily, fontSize } from '../../theme/typography';
 import { spacing, radius, layout } from '../../theme/spacing';
 import { supabase } from '../../lib/supabase';
 import { DatabaseService } from '../../services/DatabaseService';
+import BYODBModal from '../../components/BYODBModal';
+import { BYODBService } from '../../services/BYODBService';
+import { GuestModeService } from '../../services/GuestModeService';
 
 interface RegisterScreenProps {
   onNavigateToLogin: () => void;
   onRegisterSuccess: () => void;
+  onLaunchSandbox?: () => void;
 }
 
 export default function RegisterScreen({
   onNavigateToLogin,
   onRegisterSuccess,
+  onLaunchSandbox,
 }: RegisterScreenProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -45,6 +53,21 @@ export default function RegisterScreen({
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<'error' | 'success'>('error');
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [isCustomDb, setIsCustomDb] = useState(false);
+  const [showByodbModal, setShowByodbModal] = useState(false);
+
+  useEffect(() => {
+    BYODBService.getActiveConfig().then((cfg) => setIsCustomDb(cfg.isCustom));
+  }, []);
+
+  const handleLaunchSandbox = () => {
+    GuestModeService.enable();
+    if (onLaunchSandbox) {
+      onLaunchSandbox();
+    } else {
+      onRegisterSuccess();
+    }
+  };
 
   // Animation values
   const buttonScale = useRef(new Animated.Value(1)).current;
@@ -155,6 +178,118 @@ export default function RegisterScreen({
   const passwordsMismatch =
     confirmPassword.length > 0 && password !== confirmPassword;
 
+  // ─── If Public User on Default DB: Restrict Registration ───
+  if (!isCustomDb) {
+    return (
+      <View style={styles.screen}>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.restrictedCard}>
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require('../../../assets/icon.png')}
+                  style={styles.logoImage}
+                  resizeMode="cover"
+                />
+              </View>
+
+              <View style={styles.capacityBadge}>
+                <Ionicons name="lock-closed" size={13} color="#F59E0B" />
+                <Text style={styles.capacityBadgeText}>BETA CAPACITY REACHED</Text>
+              </View>
+
+              <Text style={styles.restrictedTitle}>Public Registration Paused</Text>
+              <Text style={styles.restrictedSubtitle}>
+                To preserve low latency and isolated resource limits for verified early users, direct account creation on our shared cloud cluster is currently closed.
+              </Text>
+
+              {/* Action Box 1: Demo Sandbox */}
+              <View style={styles.optionBox}>
+                <View style={styles.optionHeader}>
+                  <View style={[styles.optionIconBadge, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
+                    <Ionicons name="flash" size={18} color="#F59E0B" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.optionTitle}>Ephemeral Demo Sandbox</Text>
+                    <Text style={styles.optionDesc}>
+                      Explore full dashboard, timetable, simulator, and campus map with pre-loaded mock subjects. Zero account needed — all changes stay in browser memory and disappear when tab closes.
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={styles.sandboxActionBtn}
+                  onPress={handleLaunchSandbox}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="play" size={14} color="#0F172A" />
+                  <Text style={styles.sandboxActionBtnText}>Launch Demo Sandbox</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Action Box 2: BYODB */}
+              <View style={styles.optionBox}>
+                <View style={styles.optionHeader}>
+                  <View style={[styles.optionIconBadge, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
+                    <Ionicons name="server-outline" size={18} color="#10B981" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.optionTitle}>Bring Your Own Database (BYODB)</Text>
+                    <Text style={styles.optionDesc}>
+                      Deploy your own free Supabase project with 100% private data isolation. Once connected, registration unlocks instantly.
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.byodbRow}>
+                  <TouchableOpacity
+                    style={styles.byodbActionBtn}
+                    onPress={() => setShowByodbModal(true)}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="key-outline" size={14} color="#10B981" />
+                    <Text style={styles.byodbActionBtnText}>Configure Custom DB</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.guideActionBtn}
+                    onPress={() => Linking.openURL('https://github.com/jatinhemnani26/attendancetracker#bring-your-own-database-byodb-setup-guide')}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="book-outline" size={14} color="#94A3B8" />
+                    <Text style={styles.guideActionBtnText}>Setup Guide</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Back to Sign In button */}
+              <TouchableOpacity
+                style={styles.backToLoginBtn}
+                onPress={onNavigateToLogin}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="arrow-back" size={16} color="#94A3B8" />
+                <Text style={styles.backToLoginText}>Back to Sign In</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+
+        <BYODBModal
+          visible={showByodbModal}
+          onClose={() => setShowByodbModal(false)}
+          onConfigApplied={() => {
+            BYODBService.getActiveConfig().then((cfg) => setIsCustomDb(cfg.isCustom));
+          }}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.screen}>
       <KeyboardAvoidingView
@@ -191,6 +326,14 @@ export default function RegisterScreen({
 
           {/* ─── Glass Card Form ─── */}
           <View style={styles.formCard}>
+            {/* Custom DB Notice */}
+            <View style={styles.customDbNotice}>
+              <Ionicons name="shield-checkmark" size={16} color="#10B981" />
+              <Text style={styles.customDbNoticeText}>
+                Connected to Custom Database — Account will be saved directly to your private server.
+              </Text>
+            </View>
+
             {/* Name Field (Optional per PRD 3.5) */}
             <View style={styles.fieldGroup}>
               <View style={styles.fieldLabelRow}>
@@ -339,6 +482,14 @@ export default function RegisterScreen({
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <BYODBModal
+        visible={showByodbModal}
+        onClose={() => setShowByodbModal(false)}
+        onConfigApplied={() => {
+          BYODBService.getActiveConfig().then((cfg) => setIsCustomDb(cfg.isCustom));
+        }}
+      />
     </View>
   );
 }
@@ -512,5 +663,198 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.semiBold,
     fontSize: fontSize.base,
     color: accent.primary,
+  },
+
+  // ── Restricted Registration Card
+  restrictedCard: {
+    backgroundColor: '#0F172A',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 18,
+    padding: spacing['2xl'],
+    gap: spacing.lg,
+    maxWidth: 500,
+    width: '100%',
+    alignSelf: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 8,
+    alignItems: 'center',
+  },
+  logoContainer: {
+    marginBottom: spacing.xs,
+    width: 56,
+    height: 56,
+    borderRadius: 15,
+    overflow: 'hidden',
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  logoImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 15,
+  },
+  capacityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  capacityBadgeText: {
+    color: '#FDE68A',
+    fontSize: 11,
+    fontFamily: fontFamily.bold,
+    letterSpacing: 0.5,
+  },
+  restrictedTitle: {
+    fontFamily: fontFamily.bold,
+    fontSize: 22,
+    color: '#F8FAFC',
+    textAlign: 'center',
+    letterSpacing: -0.4,
+  },
+  restrictedSubtitle: {
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#94A3B8',
+    textAlign: 'center',
+    maxWidth: 440,
+  },
+  optionBox: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 14,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  optionHeader: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  optionIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionTitle: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: 14,
+    color: '#F1F5F9',
+    marginBottom: 4,
+  },
+  optionDesc: {
+    fontFamily: fontFamily.regular,
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#94A3B8',
+  },
+  sandboxActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#F59E0B',
+    borderRadius: 10,
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    marginTop: 4,
+  },
+  sandboxActionBtnText: {
+    color: '#0F172A',
+    fontSize: 13,
+    fontFamily: fontFamily.bold,
+  },
+  byodbRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  byodbActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.35)',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  byodbActionBtnText: {
+    color: '#10B981',
+    fontSize: 12,
+    fontFamily: fontFamily.semiBold,
+  },
+  guideActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  guideActionBtnText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontFamily: fontFamily.medium,
+  },
+  backToLoginBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginTop: 4,
+  },
+  backToLoginText: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontFamily: fontFamily.medium,
+  },
+  customDbNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: spacing.xs,
+  },
+  customDbNoticeText: {
+    color: '#10B981',
+    fontSize: 12,
+    fontFamily: fontFamily.medium,
+    flex: 1,
   },
 });

@@ -22,6 +22,7 @@ import {
   Animated,
   Dimensions,
   Linking,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -33,6 +34,7 @@ import { supabase } from '../../lib/supabase';
 import { APK_DOWNLOAD_URL } from '../../components/WebDownloadBanner';
 import BYODBModal from '../../components/BYODBModal';
 import { BYODBService } from '../../services/BYODBService';
+import { GuestModeService } from '../../services/GuestModeService';
 
 interface LoginScreenProps {
   onNavigateToRegister: () => void;
@@ -144,16 +146,34 @@ export default function LoginScreen({
     }
   };
 
+  const handleEnterGuestMode = () => {
+    GuestModeService.enable();
+    if (onLoginSuccess) onLoginSuccess();
+  };
+
   return (
     <View style={styles.screen}>
       {/* ─── Top Floating Header for Web ─── */}
       {Platform.OS === 'web' && (
         <View style={styles.webTopBar}>
           <View style={styles.webBrandRow}>
-            <View style={styles.webBrandDot} />
+            <Image
+              source={require('../../../assets/icon.png')}
+              style={styles.webBrandLogo}
+              resizeMode="cover"
+            />
             <Text style={styles.webBrandTitle}>Attendance Tracker</Text>
           </View>
           <View style={styles.webTopActions}>
+            <TouchableOpacity
+              style={[styles.webPillBtn, styles.webDemoPillBtn]}
+              onPress={handleEnterGuestMode}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="flash" size={13} color="#F59E0B" />
+              <Text style={styles.webDemoPillText}>Demo Sandbox</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               style={styles.webPillBtn}
               onPress={() => Linking.openURL(APK_DOWNLOAD_URL)}
@@ -201,7 +221,11 @@ export default function LoginScreen({
           {/* ─── Header ─── */}
           <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY }] }]}>
             <View style={styles.logoContainer}>
-              <Ionicons name="school-outline" size={24} color={accent.primary} />
+              <Image
+                source={require('../../../assets/icon.png')}
+                style={styles.logoImage}
+                resizeMode="cover"
+              />
             </View>
             <Text style={styles.title}>Attendance Tracker</Text>
             <Text style={styles.subtitle}>
@@ -376,20 +400,20 @@ const styles = StyleSheet.create({
   webBrandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
-  webBrandDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: accent.primary,
+  webBrandLogo: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   webBrandTitle: {
     color: '#F8FAFC',
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 15,
     fontFamily: fontFamily.bold,
-    letterSpacing: 0.5,
+    letterSpacing: -0.3,
   },
   webTopActions: {
     flexDirection: 'row',
@@ -406,6 +430,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
+  },
+  webDemoPillBtn: {
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+  },
+  webDemoPillText: {
+    color: '#FDE68A',
+    fontSize: 12,
+    fontFamily: fontFamily.semiBold,
   },
   webPillBtnActive: {
     borderColor: 'rgba(16, 185, 129, 0.4)',
@@ -424,14 +457,25 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     marginBottom: spacing.md,
-    width: 50,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    width: 56,
+    height: 56,
+    borderRadius: 15,
+    overflow: 'hidden',
+    backgroundColor: '#1E293B',
     borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.25)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  logoImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 15,
   },
   title: {
     fontFamily: fontFamily.bold,

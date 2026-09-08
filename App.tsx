@@ -40,6 +40,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ErrorBoundary } from "./src/ErrorBoundary";
 import WebDownloadBanner from "./src/components/WebDownloadBanner";
 import { BYODBService } from "./src/services/BYODBService";
+import { GuestModeService } from "./src/services/GuestModeService";
 
 // Keep the splash screen visible while we load fonts
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -248,6 +249,10 @@ export default function App() {
           <RegisterScreen
             onNavigateToLogin={() => setCurrentScreen("login")}
             onRegisterSuccess={() => setCurrentScreen("login")}
+            onLaunchSandbox={() => {
+              GuestModeService.enable();
+              setIsAuthenticated(true);
+            }}
           />
         );
       case "forgotPassword":
