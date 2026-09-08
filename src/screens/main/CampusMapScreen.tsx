@@ -315,21 +315,42 @@ export default function CampusMapScreen() {
       setFollowUser(true);
 
       locationSub.current = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.High, timeInterval: 2000, distanceInterval: 2 },
+        { accuracy: Location.Accuracy.High, timeInterval: 1500, distanceInterval: 1.5 },
         async (pos) => {
           try {
+            const { latitude, longitude, accuracy, heading } = pos.coords;
+
+            // 1. Outlier & Spike Filter
+            if (!LocationService.isValidFix(latitude, longitude, accuracy)) {
+              return;
+            }
+
+            // 2. Affine Transformation
             const offset = await LocationService.getCalibrationOffset();
-            const pix = LocationService.gpsToPixel(pos.coords.latitude, pos.coords.longitude, offset);
-            const snapped = LocationService.snapToNearestPath(pix.x, pix.y);
+            const pix = LocationService.gpsToPixel(latitude, longitude, offset);
+
+            // 3. Exponential Moving Average (EMA) Smoother
+            const smoothed = LocationService.smoothPosition(pix.x, pix.y);
+
+            // 4. Map-Matching (Road Snapping)
+            const snapped = LocationService.snapToNearestPath(smoothed.x, smoothed.y);
             
             setLivePosition({
               x: snapped.x,
               y: snapped.y,
-              heading: pos.coords.heading || 0,
+              heading: heading || 0,
             });
 
             if (followUser) {
               centerOnCoordinates(snapped.x, snapped.y);
+            }
+
+            // 5. Geofence Arrival Check & Adaptive Self-Calibration
+            if (navigatingTo) {
+              const hasArrived = LocationService.checkArrival(snapped.x, snapped.y, navigatingTo.entranceNode);
+              if (hasArrived) {
+                LocationService.recordArrivalCorrection(navigatingTo.id, latitude, longitude);
+              }
             }
           } catch (e) {
             // Safe fallback
