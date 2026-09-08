@@ -21,6 +21,7 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -29,6 +30,7 @@ import { textStyle, fontFamily, fontSize } from '../../theme/typography';
 import { spacing, radius, layout } from '../../theme/spacing';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
+import { APK_DOWNLOAD_URL } from '../../components/WebDownloadBanner';
 
 interface LoginScreenProps {
   onNavigateToRegister: () => void;
@@ -277,6 +279,26 @@ export default function LoginScreen({
               <Text style={styles.registerLink}>Create one</Text>
             </TouchableOpacity>
           </View>
+
+          {/* ─── Web APK Download Link ─── */}
+          {Platform.OS === 'web' && (
+            <View style={styles.webDownloadSection}>
+              <View style={styles.webDivider}>
+                <View style={styles.webDividerLine} />
+                <Text style={styles.webDividerText}>OR MOBILE APP</Text>
+                <View style={styles.webDividerLine} />
+              </View>
+              <TouchableOpacity
+                style={styles.webApkButton}
+                onPress={() => Linking.openURL(APK_DOWNLOAD_URL)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="logo-android" size={18} color="#10B981" />
+                <Text style={styles.webApkButtonText}>Download Android App (.APK)</Text>
+                <Ionicons name="download-outline" size={15} color="#94A3B8" />
+              </TouchableOpacity>
+            </View>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -452,5 +474,46 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.semiBold,
     fontSize: fontSize.base,
     color: accent.primary,
+  },
+  webDownloadSection: {
+    marginTop: spacing.xl,
+    alignItems: 'center',
+    width: '100%',
+  },
+  webDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: spacing.md,
+  },
+  webDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  webDividerText: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: text.disabled,
+    paddingHorizontal: 12,
+  },
+  webApkButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: radius.md,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    width: '100%',
+  },
+  webApkButtonText: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: fontSize.sm,
+    color: text.primary,
   },
 });

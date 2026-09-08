@@ -178,6 +178,14 @@ npx expo start
 ### Running the Web CAD Studio
 Open `tools/CampusRouteStudio.html` directly in any web browser to view, calibrate, or export campus road networks and waypoint graphs.
 
+### 🌐 Deploying Web App to Vercel
+This repository includes a pre-configured `vercel.json` and `"build": "expo export -p web"` script for automated Vercel deployment:
+1. Import this repository into Vercel.
+2. Under **Environment Variables**, supply:
+   - `EXPO_PUBLIC_SUPABASE_URL`
+   - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+3. Click **Deploy**. Vercel will export the static web bundle into `dist` and serve the web version with direct in-app mobile APK download banners.
+
 ---
 
 ## 📄 License

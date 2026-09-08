@@ -38,6 +38,7 @@ import { supabase } from "./src/lib/supabase";
 import { NotificationService } from "./src/services/NotificationService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ErrorBoundary } from "./src/ErrorBoundary";
+import WebDownloadBanner from "./src/components/WebDownloadBanner";
 
 // Keep the splash screen visible while we load fonts
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -263,6 +264,7 @@ export default function App() {
           <SafeAreaProvider>
             <BottomSheetModalProvider>
               <View style={styles.container}>
+                <WebDownloadBanner />
                 {renderContent()}
                 <StatusBar style="light" />
               </View>
