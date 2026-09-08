@@ -213,7 +213,7 @@ export default function RegisterScreen({
               <View style={styles.optionBox}>
                 <View style={styles.optionHeader}>
                   <View style={[styles.optionIconBadge, { backgroundColor: 'rgba(99, 102, 241, 0.12)' }]}>
-                    <Ionicons name="sparkles" size={17} color="#818CF8" />
+                    <Ionicons name="person-outline" size={17} color="#818CF8" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.optionTitle}>Explore in Guest Mode</Text>
@@ -227,7 +227,7 @@ export default function RegisterScreen({
                   onPress={handleLaunchGuestMode}
                   activeOpacity={0.85}
                 >
-                  <Ionicons name="sparkles-outline" size={14} color="#FFFFFF" />
+                  <Ionicons name="person-outline" size={14} color="#FFFFFF" />
                   <Text style={styles.guestActionBtnText}>Launch Guest Mode</Text>
                 </TouchableOpacity>
               </View>

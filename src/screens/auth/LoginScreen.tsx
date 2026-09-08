@@ -170,7 +170,7 @@ export default function LoginScreen({
               onPress={handleEnterGuestMode}
               activeOpacity={0.8}
             >
-              <Ionicons name="sparkles-outline" size={12} color="#94A3B8" />
+              <Ionicons name="person-outline" size={12} color="#94A3B8" />
               <Text style={styles.webPillText}>Guest Mode</Text>
             </TouchableOpacity>
 
