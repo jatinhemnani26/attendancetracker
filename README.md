@@ -7,6 +7,12 @@
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
+<p align="center">
+  <a href="https://expo.dev/artifacts/eas/AG27TWjpYW4S5nDgj3rdnxvSPS_0tAwvh6RN1vT_pqg.apk">
+    <img src="https://img.shields.io/badge/⬇️_DOWNLOAD_ANDROID_APP-PRODUCTION_APK_(v1.0.0)-10B981?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download Android APK" />
+  </a>
+</p>
+
 An all-in-one **academic operating system and indoor/outdoor campus navigation engine** for university students. Combines real-time attendance compliance monitoring, bunk forecasting, timetable automation, and a custom architectural GIS wayfinding engine with road-snapped GPS tracking.
 
 ---
@@ -185,6 +191,35 @@ This repository includes a pre-configured `vercel.json` and `"build": "expo expo
    - `EXPO_PUBLIC_SUPABASE_URL`
    - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 3. Click **Deploy**. Vercel will export the static web bundle into `dist` and serve the web version with direct in-app mobile APK download banners.
+
+---
+
+## 🔌 Bring Your Own Database (BYODB) & Data Privacy
+
+This application is built with a **zero-trust, multi-tenant architecture**. Whether running on the web or self-hosting, your data is completely isolated:
+
+### 1. Data Isolation & Security
+- **Strict Row Level Security (RLS):** Every table in the system enforces `auth.uid() = user_id`. Even when multiple users connect to the same Supabase database, no user can ever query or modify another user's academic records, timetables, or attendance logs.
+- **Client-Side Credential Storage:** Custom database configurations are stored solely in your local client device storage (`AsyncStorage` / browser `localStorage`) and are never transmitted to third parties.
+
+### 2. Step-by-Step Guide: Connecting Your Own Supabase Backend (BYODB)
+If you want to use your own independent database instance:
+1. **Create a Free Supabase Project:** Sign up at [supabase.com](https://supabase.com) and create a new project.
+2. **Execute the Complete Schema:**
+   - In your Supabase dashboard, go to the **SQL Editor**.
+   - Copy the entire contents of [`supabase/complete_schema.sql`](supabase/complete_schema.sql) from this repository.
+   - Paste it into the SQL Editor and click **Run**.
+   - *This creates all tables (`profiles`, `subjects`, `attendance_records`, `timetable_slots`, `holidays`, `academic_tasks`, `campus_buildings`), indexes, triggers, and RLS policies in one step.*
+3. **Obtain API Keys:**
+   - Go to **Project Settings → API**.
+   - Copy your **Project URL** (e.g. `https://your-project.supabase.co`) and your **anon / public key**.
+4. **Connect in App:**
+   - Open the app on the web or mobile login screen.
+   - Click **Connect Custom Supabase (BYODB)**.
+   - Paste your URL and Anon Key, then tap **Connect Database**.
+   - The app instantly switches connections to *your* private Supabase project. You can now register, sign in, and have complete ownership of your academic records.
+5. **Resetting to Default:**
+   - You can click **Reset to Default** in the BYODB modal at any time to switch back to the official server instance.
 
 ---
 

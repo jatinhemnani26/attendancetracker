@@ -31,6 +31,8 @@ import { spacing, radius, layout } from '../../theme/spacing';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { APK_DOWNLOAD_URL } from '../../components/WebDownloadBanner';
+import BYODBModal from '../../components/BYODBModal';
+import { BYODBService } from '../../services/BYODBService';
 
 interface LoginScreenProps {
   onNavigateToRegister: () => void;
@@ -48,6 +50,14 @@ export default function LoginScreen({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [showByodbModal, setShowByodbModal] = useState(false);
+  const [isCustomDb, setIsCustomDb] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      BYODBService.getActiveConfig().then((cfg) => setIsCustomDb(cfg.isCustom));
+    }
+  }, []);
 
   // Animation values
   const buttonScale = useRef(new Animated.Value(1)).current;
@@ -280,14 +290,15 @@ export default function LoginScreen({
             </TouchableOpacity>
           </View>
 
-          {/* ─── Web APK Download Link ─── */}
+          {/* ─── Web APK Download & BYODB ─── */}
           {Platform.OS === 'web' && (
             <View style={styles.webDownloadSection}>
               <View style={styles.webDivider}>
                 <View style={styles.webDividerLine} />
-                <Text style={styles.webDividerText}>OR MOBILE APP</Text>
+                <Text style={styles.webDividerText}>EXPLORE & SELF-HOST</Text>
                 <View style={styles.webDividerLine} />
               </View>
+
               <TouchableOpacity
                 style={styles.webApkButton}
                 onPress={() => Linking.openURL(APK_DOWNLOAD_URL)}
@@ -297,10 +308,30 @@ export default function LoginScreen({
                 <Text style={styles.webApkButtonText}>Download Android App (.APK)</Text>
                 <Ionicons name="download-outline" size={15} color="#94A3B8" />
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.webApkButton, { marginTop: 10 }]}
+                onPress={() => setShowByodbModal(true)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="server-outline" size={18} color={accent.primary} />
+                <Text style={styles.webApkButtonText}>
+                  {isCustomDb ? 'Connected: Custom Supabase' : 'Connect Custom Supabase (BYODB)'}
+                </Text>
+                <Ionicons name="settings-outline" size={15} color="#94A3B8" />
+              </TouchableOpacity>
             </View>
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <BYODBModal
+        visible={showByodbModal}
+        onClose={() => setShowByodbModal(false)}
+        onConfigApplied={() => {
+          BYODBService.getActiveConfig().then((cfg) => setIsCustomDb(cfg.isCustom));
+        }}
+      />
     </View>
   );
 }

@@ -39,6 +39,7 @@ import { NotificationService } from "./src/services/NotificationService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ErrorBoundary } from "./src/ErrorBoundary";
 import WebDownloadBanner from "./src/components/WebDownloadBanner";
+import { BYODBService } from "./src/services/BYODBService";
 
 // Keep the splash screen visible while we load fonts
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -102,6 +103,9 @@ export default function App() {
             setAppReady(true);
           }
         }, 4000);
+
+        // Initialize custom BYODB credentials if configured
+        await BYODBService.initConfig();
 
         // Initial session check
         try {
