@@ -1,0 +1,41 @@
+﻿name: Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download APK from EAS Build
+        run: |
+          curl -L "https://expo.dev/artifacts/eas/AG27TWjpYW4S5nDgj3rdnxvSPS_0tAwvh6RN1vT_pqg.apk" -o AttendanceTracker.apk
+          ls -lh AttendanceTracker.apk
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Attendance Tracker v1.0.0"
+          tag_name: ${{ github.ref_name || 'v1.0.0' }}
+          files: AttendanceTracker.apk
+          draft: false
+          prerelease: false
+          make_latest: true
+          body: |
+            ## Attendance Tracker Android Release
+
+            Official Android APK build for Attendance Tracker.
+
+            ### Direct Download
+            - **[AttendanceTracker.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.0/AttendanceTracker.apk)**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
