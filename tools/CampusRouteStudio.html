@@ -1,0 +1,2857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campus Route Studio Pro — Interactive Wayfinding Architect</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #060912;
+      color: #F1F5F9;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      width: 420px;
+      background-color: #0C111C;
+      border-right: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      flex-direction: column;
+      z-index: 20;
+    }
+    .sidebar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(180deg, #131A2A 0%, #0C111C 100%);
+    }
+    .sidebar-header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sidebar-header p {
+      font-size: 12px;
+      color: #94A3B8;
+      margin-top: 4px;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: #0C111C;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #94A3B8;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      color: #6366F1;
+      border-bottom-color: #6366F1;
+      background: rgba(99,102,241,0.05);
+    }
+
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Cards */
+    .card {
+      background: #131A2A;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .card h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #E2E8F0;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Form controls */
+    label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94A3B8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 6px;
+    }
+    select, input, button {
+      font-family: inherit;
+      font-size: 13px;
+    }
+    select, input {
+      width: 100%;
+      background: #060912;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #F1F5F9;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+    select:focus, input:focus {
+      border-color: #6366F1;
+    }
+    button.btn-primary {
+      width: 100%;
+      background: #6366F1;
+      color: #FFFFFF;
+      font-weight: 600;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    button.btn-primary:hover {
+      background: #4F46E5;
+    }
+    button.btn-secondary {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      color: #CBD5E1;
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button.btn-secondary:hover {
+      background: rgba(255,255,255,0.1);
+      color: #FFF;
+    }
+
+    /* Route list */
+    .route-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    .route-item:hover {
+      background: rgba(99,102,241,0.08);
+      border-color: rgba(99,102,241,0.3);
+    }
+    .route-item.selected {
+      border-color: #6366F1;
+      background: rgba(99,102,241,0.12);
+    }
+    .route-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+      cursor: pointer;
+    }
+    .route-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #F8FAFC;
+    }
+    .route-meta {
+      font-size: 11px;
+      color: #64748B;
+    }
+    .route-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-icon {
+      background: transparent;
+      border: none;
+      color: #94A3B8;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-icon:hover {
+      color: #EF4444;
+      background: rgba(239,68,68,0.1);
+    }
+    .route-toggle {
+      accent-color: #6366F1;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    /* Map Viewport */
+    #viewport {
+      flex: 1;
+      position: relative;
+      background: radial-gradient(circle at center, #0F172A 0%, #020617 100%);
+      overflow: hidden;
+      cursor: grab;
+    }
+    #viewport:active {
+      cursor: grabbing;
+    }
+    svg#campusMap {
+      width: 100%;
+      height: 100%;
+      user-select: none;
+    }
+
+    /* Floating Toolbar */
+    .floating-bar {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      gap: 8px;
+      background: rgba(12, 17, 28, 0.9);
+      backdrop-filter: blur(12px);
+      padding: 6px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      z-index: 10;
+    }
+    .tool-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #94A3B8;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .tool-btn:hover {
+      color: #FFF;
+      background: rgba(255,255,255,0.06);
+    }
+    .tool-btn.active {
+      background: #6366F1;
+      color: #FFF;
+    }
+
+    /* Node Inspector Badge */
+    #nodeInspector {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(12, 17, 28, 0.95);
+      border: 1px solid rgba(99,102,241,0.4);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 30;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    #nodeInspector h4 {
+      font-size: 12px;
+      color: #A5B4FC;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    #nodeInspector p {
+      font-size: 13px;
+      color: #F1F5F9;
+      font-family: monospace;
+    }
+
+    /* Status Pill */
+    .status-pill {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      background: rgba(12, 17, 28, 0.9);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: #94A3B8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 10;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 4px;
+      background: #10B981;
+    }
+
+    /* Modal / Export drawer */
+    #exportModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      z-index: 50;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-box {
+      width: 700px;
+      max-width: 92vw;
+      background: #0C111C;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 85vh;
+    }
+    textarea.code-export {
+      width: 100%;
+      height: 320px;
+      background: #060912;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #A5B4FC;
+      font-family: monospace;
+      font-size: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      resize: none;
+      outline: none;
+    }
+
+    /* Node Hover and Drag styling */
+    .waypoint-node {
+      cursor: grab;
+      transition: r 0.15s, stroke-width 0.15s;
+    }
+    .waypoint-node:hover {
+      r: 6 !important;
+      stroke: #FFF !important;
+      stroke-width: 2.5 !important;
+    }
+    .waypoint-node.active-drag {
+      cursor: grabbing;
+      r: 7 !important;
+      fill: #FBBF24 !important;
+      stroke: #FFF !important;
+    }
+    .waypoint-node.selected-node {
+      r: 7 !important;
+      fill: #EF4444 !important;
+      stroke: #FFF !important;
+      stroke-width: 2.5 !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <h1>🗺️ Campus Route Studio Pro</h1>
+      <p>Interactive CAD & GIS Wayfinding Studio for your campus map.</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('routes')">Routes (<span id="routeCount">0</span>)</button>
+      <button class="tab-btn" onclick="switchTab('test')">Dijkstra</button>
+      <button class="tab-btn" onclick="switchTab('tools')">Tools</button>
+      <button class="tab-btn" onclick="switchTab('calibrate')">📍 GPS (<span id="calibCount">0</span>/20)</button>
+      <button class="tab-btn" onclick="switchTab('autowalk')">🏃 Auto-Walk</button>
+    </div>
+
+    <!-- TAB 1: Route List -->
+    <div id="tab-routes" class="tab-content">
+      <div class="card">
+        <h3>
+          Route Network Segments
+          <div style="display:flex; gap:8px;">
+            <button onclick="undo()" style="background:none; border:none; color:#38BDF8; font-size:11px; font-weight:600; cursor:pointer;">↩️ Undo (Ctrl+Z)</button>
+            <button onclick="resetAllRoutes()" style="background:none; border:none; color:#EF4444; font-size:11px; cursor:pointer;">Reset Default</button>
+          </div>
+        </h3>
+        <p style="font-size:12px; color:#94A3B8; margin-bottom:12px;">
+          • Click any route line on the map to select it.<br>
+          • <b>Turn on ✏️ Edit Route</b> and click anywhere on a line to insert a new bend point!<br>
+          • Drag any white waypoint to reshape paths • Press <b>Ctrl+Z</b> to undo.
+        </p>
+        <div id="routesList"></div>
+      </div>
+      <button class="btn-primary" onclick="openExportModal()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Export Curated Network
+      </button>
+    </div>
+
+    <!-- TAB 2: Pathfinding Test -->
+    <div id="tab-test" class="tab-content" style="display:none;">
+      <div class="card">
+        <h3>Live Dijkstra Navigation Test</h3>
+        
+        <label>Start Building</label>
+        <select id="selectStart" onchange="runPathfindingTest()"></select>
+
+        <label>Destination Building</label>
+        <select id="selectEnd" onchange="runPathfindingTest()"></select>
+
+        <button class="btn-primary" onclick="runPathfindingTest()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Find Shortest Route
+        </button>
+      </div>
+
+      <div class="card" id="testResultCard" style="display:none;">
+        <h3 style="color:#10B981;">Shortest Route Calculated</h3>
+        <div style="font-size:13px; line-height:1.6; color:#CBD5E1;" id="routeStats"></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Advanced Tools -->
+    <div id="tab-tools" class="tab-content" style="display:none;">
+      <div class="card">
+        <h3>Add New Route Segment</h3>
+        <p style="font-size:12px; color:#94A3B8; margin-bottom:12px;">
+          Click "Start Drawing" and click points on the map. Nearby points snap magnetically!
+        </p>
+        <label>Route Name</label>
+        <input type="text" id="newRouteName" placeholder="e.g. Garden Shortcut Walkway" />
+
+        <label>Category</label>
+        <select id="newRouteCategory">
+          <option value="road">Arterial Road (Thick, 10px)</option>
+          <option value="walkway" selected>Pedestrian Walkway (Standard, 5px)</option>
+          <option value="connector">Doorway Connector (Dashed, 3px)</option>
+        </select>
+
+        <div style="display:flex; gap:8px;">
+          <button id="btnDraw" class="btn-primary" onclick="toggleDrawingMode()">Start Drawing</button>
+          <button class="btn-secondary" onclick="cancelDrawing()">Cancel</button>
+        </div>
+        <div id="drawNodeCount" style="font-size:11px; color:#6366F1; margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <h3>Distance Ruler Mode</h3>
+        <p style="font-size:12px; color:#94A3B8; margin-bottom:10px;">
+          Click any two points on the map to measure the physical distance in meters.
+        </p>
+        <button class="btn-secondary" id="btnRuler" onclick="toggleRulerMode()">Activate Ruler</button>
+        <div id="rulerResult" style="margin-top:8px; font-size:13px; color:#34D399; font-weight:bold;"></div>
+      </div>
+
+      <div class="card">
+        <h3>Selected Node Actions</h3>
+        <div id="nodeActionStatus" style="font-size:12px; color:#94A3B8; margin-bottom:8px;">No node currently selected. Click any node on the map.</div>
+        <button class="btn-secondary" id="btnDeleteNode" disabled onclick="deleteSelectedNode()" style="color:#EF4444; border-color:rgba(239,68,68,0.3);">
+          Delete Selected Node (Del)
+        </button>
+      </div>
+
+      <!-- Custom Landmarks & POIs (Xerox, Stationery, Canteen, ATM) -->
+      <div class="card">
+        <h3>🏪 Add Landmark / Amenity (Xerox, Shop)</h3>
+        <p style="font-size:12px; color:#94A3B8; margin-bottom:10px;">
+          Add Xerox centers, stationery shops, ATMs, or food stalls with 1-click or live GPS!
+        </p>
+
+        <label>Landmark Name</label>
+        <input type="text" id="poiName" placeholder="e.g. Central Xerox & Stationery" />
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+          <div>
+            <label>Category / Icon</label>
+            <select id="poiCategory">
+              <option value="🖨️">🖨️ Xerox / Print Shop</option>
+              <option value="📚">📚 Stationery / Books</option>
+              <option value="☕">☕ Cafe / Canteen</option>
+              <option value="🏧">🏧 ATM / Bank</option>
+              <option value="🏥">🏥 Medical / Clinic</option>
+              <option value="🚻">🚻 Restroom</option>
+              <option value="⭐">⭐ Other Landmark</option>
+            </select>
+          </div>
+          <div>
+            <label>Marker Color</label>
+            <select id="poiColor">
+              <option value="#8B5CF6">🟣 Purple</option>
+              <option value="#06B6D4">🔵 Cyan</option>
+              <option value="#F59E0B">🟠 Amber</option>
+              <option value="#EC4899">🌸 Pink</option>
+              <option value="#10B981">🟢 Emerald</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:6px;">
+          <button id="btnPoiClick" class="btn-primary" onclick="togglePoiClickMode()" style="background:#6366F1;">
+            🎯 1-Click: Tap on Map to Place
+          </button>
+          <button id="btnPoiGps" class="btn-primary" onclick="dropPoiByLiveGps()" style="background:#10B981;">
+            📡 Drop Here by Live GPS (Campus)
+          </button>
+        </div>
+        <div id="poiStatus" style="font-size:11px; line-height:1.4; margin-top:8px; color:#A5B4FC; display:none; padding:8px; background:rgba(99,102,241,0.1); border-radius:6px; border:1px solid rgba(99,102,241,0.25);"></div>
+      </div>
+
+      <!-- List of Custom Landmarks with Delete -->
+      <div class="card" id="customLandmarksCard" style="display:none;">
+        <h3>Custom Landmarks (<span id="customPoiCount">0</span>)</h3>
+        <div id="customPoiList" style="max-height:160px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+    </div>
+
+    <!-- TAB 4: GPS Calibration Studio -->
+    <div id="tab-calibrate" class="tab-content" style="display:none;">
+      <div class="card">
+        <h3>
+          📍 Campus Ground Truth Studio
+          <span id="calibBadgeTop" style="font-size:11px; font-weight:600; background:rgba(16,185,129,0.15); color:#10B981; padding:2px 8px; border-radius:10px; border:1px solid rgba(16,185,129,0.3);">0 / 20 Calibrated</span>
+        </h3>
+        <p style="font-size:12px; color:#94A3B8; margin-bottom:12px;">
+          Stand near a campus building, select it, and click <b>Calibrate Live GPS</b> to capture exact satellite coordinates for maximum app accuracy!
+        </p>
+
+        <label>Select Target Building</label>
+        <select id="selectCalibBuilding" onchange="onCalibBuildingChange()"></select>
+
+        <div id="calibBldgCard" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div id="calibBldgTitle" style="font-size:14px; font-weight:700; color:#FFF;">Admin Block</div>
+            <div id="calibBldgSubtitle" style="font-size:11px; color:#94A3B8; margin-top:2px;">Block 1 • ADMIN • Map (x: 518, y: 208)</div>
+          </div>
+          <span id="calibStatusBadge" style="font-size:11px; font-weight:600; padding:4px 8px; border-radius:6px; background:rgba(239,68,68,0.15); color:#F87171; border:1px solid rgba(239,68,68,0.3);">Uncalibrated</span>
+        </div>
+
+        <button id="btnCaptureGps" class="btn-primary" onclick="captureLiveGpsForSelectedBuilding()" style="background:#10B981; margin-bottom:10px;">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.07-7.07l-2.83 2.83M8.76 15.24l-2.83 2.83m0-14.14l2.83 2.83m8.48 8.48l2.83 2.83"/><circle cx="12" cy="12" r="3"/></svg>
+          📡 Calibrate Live GPS (Get Exact Location)
+        </button>
+        <div id="gpsCaptureStatus" style="font-size:12px; line-height:1.4; color:#A5B4FC; margin-bottom:12px; display:none; padding:8px; background:rgba(99,102,241,0.1); border-radius:6px; border:1px solid rgba(99,102,241,0.25);"></div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div>
+            <label>Latitude (Lat)</label>
+            <input type="text" id="calibLat" placeholder="e.g. 28.613941" style="margin-bottom:6px;" />
+          </div>
+          <div>
+            <label>Longitude (Lng)</label>
+            <input type="text" id="calibLng" placeholder="e.g. 77.209015" style="margin-bottom:6px;" />
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:11px;">
+          <span id="calibAccuracyDisplay" style="color:#94A3B8;">Accuracy: —</span>
+          <span id="calibTimestampDisplay" style="color:#64748B;">Time: —</span>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn-secondary" onclick="saveManualCalibration()" style="flex:2;">💾 Save Manual Coords</button>
+          <button class="btn-secondary" onclick="clearSelectedCalibration()" style="flex:1; color:#EF4444; border-color:rgba(239,68,68,0.3);">Clear</button>
+        </div>
+      </div>
+
+      <!-- Building Calibration Status Checklist -->
+      <div class="card">
+        <h3>Campus Buildings Status</h3>
+        <div id="calibBuildingChecklist" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+
+      <!-- Import / Export Card -->
+      <div class="card">
+        <h3>💾 Import & Export Ground Truth</h3>
+        <p style="font-size:12px; color:#94A3B8; margin-bottom:12px;">
+          Export from your phone, then Import here on your laptop to transfer your exact high-accuracy GPS coordinates!
+        </p>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-primary" onclick="openGpsImportModal()" style="flex:1; background:#8B5CF6; border-bottom:3px solid #7C3AED;">
+            📤 Import JSON
+          </button>
+          <button class="btn-primary" onclick="openGpsExportModal('json')" style="flex:1;">
+            📥 Export JSON
+          </button>
+          <button class="btn-secondary" onclick="openGpsExportModal('ts')" style="flex:1;">
+            📋 Code
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: Auto-Walk Builder -->
+    <div id="tab-autowalk" class="tab-content" style="display:none;">
+      <div class="card">
+        <h3>🏃 Auto-Walk Route Builder</h3>
+        <p style="font-size:12px; color:#94A3B8; margin-bottom:12px;">
+          Use 3 calibrated buildings to create a high-precision GPS-to-SVG matrix. Then walk and auto-record your path!
+        </p>
+
+        <label>Anchor A</label>
+        <select id="awAnchorA"></select>
+
+        <label>Anchor B</label>
+        <select id="awAnchorB"></select>
+
+        <label>Anchor C</label>
+        <select id="awAnchorC"></select>
+
+        <button class="btn-primary" onclick="computeAffineMatrix()" style="margin-bottom:10px;">
+          🧮 Compute Transform Matrix
+        </button>
+        <div id="awMatrixStatus" style="font-size:12px; color:#A5B4FC; margin-bottom:12px; display:none; padding:8px; background:rgba(99,102,241,0.1); border-radius:6px; border:1px solid rgba(99,102,241,0.25);"></div>
+      </div>
+
+      <div class="card">
+        <h3>Live Recording</h3>
+        <label>Route Name</label>
+        <input type="text" id="awRouteName" placeholder="e.g. Hostels to Library" />
+        
+        <div style="display:flex; gap:8px;">
+          <button id="btnToggleWalk" class="btn-primary" onclick="toggleAutoWalk()" style="background:#10B981;" disabled>
+            ▶️ Start Walking
+          </button>
+          <button id="btnSaveWalk" class="btn-secondary" onclick="saveAutoWalkRoute()" disabled>
+            💾 Save Route
+          </button>
+        </div>
+        
+        <div id="awWalkStatus" style="margin-top:12px; font-size:11px; color:#64748B;">
+          Waiting for matrix calibration...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Viewport -->
+  <div id="viewport">
+    <!-- Floating Toolbar -->
+    <div class="floating-bar">
+      <button class="tool-btn" id="btnUndo" onclick="undo()" title="Undo last action (Ctrl+Z)" style="color:#38BDF8;">↩️ Undo</button>
+      <button class="tool-btn" id="btnRouteEditMode" onclick="toggleRouteEditMode()" title="Click on route lines to insert new bend waypoints">✏️ Edit Route: OFF</button>
+      <button class="tool-btn active" id="btnToggleRoads" onclick="toggleLayer('roads')">Roads</button>
+      <button class="tool-btn active" id="btnToggleConnectors" onclick="toggleLayer('connectors')">Doorways</button>
+      <button class="tool-btn active" id="btnToggleLabels" onclick="toggleLayer('labels')">Labels</button>
+      <button class="tool-btn" id="btnMagneticSnap" onclick="toggleMagneticSnap()">🧲 Snap: ON</button>
+      <button class="tool-btn" onclick="resetZoom()">Reset View</button>
+    </div>
+
+    <!-- SVG Canvas -->
+    <svg id="campusMap" viewBox="0 0 800 650">
+      <defs>
+        <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0F172A" />
+          <stop offset="100%" stop-color="#020617" />
+        </linearGradient>
+      </defs>
+
+      <g id="transformGroup">
+        <!-- Ground Background -->
+        <rect x="0" y="0" width="800" height="650" fill="url(#bgGrad)" />
+
+        <!-- Grid Lines -->
+        <g id="gridLayer" stroke="rgba(255,255,255,0.03)" stroke-width="1">
+          <line x1="100" y1="0" x2="100" y2="650" />
+          <line x1="200" y1="0" x2="200" y2="650" />
+          <line x1="300" y1="0" x2="300" y2="650" />
+          <line x1="400" y1="0" x2="400" y2="650" />
+          <line x1="500" y1="0" x2="500" y2="650" />
+          <line x1="600" y1="0" x2="600" y2="650" />
+          <line x1="700" y1="0" x2="700" y2="650" />
+          <line x1="0" y1="100" x2="800" y2="100" />
+          <line x1="0" y1="200" x2="800" y2="200" />
+          <line x1="0" y1="300" x2="800" y2="300" />
+          <line x1="0" y1="400" x2="800" y2="400" />
+          <line x1="0" y1="500" x2="800" y2="500" />
+          <line x1="0" y1="600" x2="800" y2="600" />
+        </g>
+
+        <!-- Route Layer (User editable & logic routes) -->
+        <g id="routesLayer"></g>
+
+        <!-- Buildings Layer -->
+        <g id="buildingsLayer"></g>
+
+        <!-- Active Shortest Path Route Layer -->
+        <g id="activeRouteLayer"></g>
+
+        <!-- Drawing & Ruler Preview Layer -->
+        <g id="drawingLayer"></g>
+      </g>
+    </svg>
+
+    <!-- Node Inspector Floating Badge -->
+    <div id="nodeInspector">
+      <h4 id="inspRouteName">ROUTE</h4>
+      <p id="inspCoords">Node: x: 0, y: 0</p>
+    </div>
+
+    <div class="status-pill">
+      <div class="status-dot"></div>
+      <span id="statusText">Ready • Drag waypoints to reposition • Scroll to zoom</span>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div id="exportModal">
+    <div class="modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 id="exportModalTitle" style="font-size:18px; font-weight:700; color:#FFF;">Export Curated Route Network</h2>
+        <div style="display:flex; gap:6px;">
+          <button class="tab-btn active" id="btnExportJson" onclick="switchExportFormat('json')">JSON</button>
+          <button class="tab-btn" id="btnExportTs" onclick="switchExportFormat('ts')">TypeScript</button>
+        </div>
+      </div>
+      <p id="exportModalDesc" style="font-size:13px; color:#94A3B8;">
+        Copy this curated dataset and paste it directly into our chat when you're back from campus!
+      </p>
+      <textarea id="exportText" class="code-export" readonly></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn-secondary" onclick="closeExportModal()">Close</button>
+        <button class="btn-primary" onclick="copyExportCode()">Copy to Clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Modal -->
+  <div id="importModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); z-index:50; align-items:center; justify-content:center;">
+    <div class="modal-box">
+      <h2 style="font-size:18px; font-weight:700; color:#FFF;">📤 Import GPS JSON</h2>
+      <p style="font-size:13px; color:#94A3B8;">
+        Paste the JSON you exported from your phone below and click Import. This will instantly sync your laptop with your field data!
+      </p>
+      <textarea id="importText" class="code-export" placeholder='{"exportedAt": "...", "buildings": [...] }'></textarea>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+        <span id="importStatus" style="font-size:13px; font-weight:600;"></span>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-secondary" onclick="closeImportModal()">Cancel</button>
+          <button class="btn-primary" onclick="processImportJson()" style="background:#10B981;">Import Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ─── 1. CAMPUS BUILDINGS (Exact Contours from App) ─────────────────────────
+    const CAMPUS_BUILDINGS = [
+      { id: 'block_17', number: '17', name: 'Canteen', shortName: 'CANTEEN', x: 78, y: 137, color: '#6366F1', shapeType: 'polygon', polygon: '53,120 54,142 50,141 47,142 47,145 55,149 54,156 56,157 57,163 63,166 65,164 68,167 71,164 76,168 85,163 86,168 90,165 90,170 108,159 96,154 96,133 90,131 93,129 93,124 91,124 91,119 85,117 83,121 79,119 78,121 74,118 73,113 75,112 75,107 68,103 68,106 62,110 62,114' },
+      { id: 'block_7', number: '7', name: 'Computer Engineering', shortName: 'CSE', x: 227, y: 209, color: '#475569', shapeType: 'polygon', polygon: '201,182 200,209 226,209 226,235 253,234 253,182' },
+      { id: 'block_8', number: '8', name: 'Information Technology', shortName: 'IT', x: 188, y: 252, color: '#0EA5E9', shapeType: 'polygon', polygon: '158,217 157,252 175,252 174,261 165,261 164,286 218,286 218,243 191,244 192,218' },
+      { id: 'block_10', number: '10', name: 'M Wing', shortName: 'M-WING', x: 124, y: 277, color: '#EF4444', shapeType: 'polygon', polygon: '105,225 104,270 108,270 108,284 105,284 104,329 142,329 142,285 141,285 141,270 144,270 144,260 142,260 142,225' },
+      { id: 'block_9', number: '9', name: 'Electronics & Comm', shortName: 'ECE', x: 206, y: 348, color: '#F43F5E', shapeType: 'polygon', polygon: '158,295 157,329 184,328 183,337 158,337 157,363 192,363 197,368 201,371 201,400 237,399 237,381 254,381 253,345 227,345 227,336 218,337 218,328 218,295' },
+      { id: 'block_11', number: '11', name: 'Mechanical Workshop', shortName: 'WORKSHOP', x: 187, y: 468, color: '#0D9488', shapeType: 'polygon', polygon: '122,465 122,470 185,533 189,533 251,470 251,465 190,403 184,403' },
+      { id: 'block_12', number: '12', name: 'Civil Engineering', shortName: 'CIVIL', x: 272, y: 504, color: '#FB923C', shapeType: 'polygon', polygon: '213,524 285,453 331,499 312,519 320,528 301,547 291,538 278,551 273,545 266,551 253,538 236,555 230,549 234,544' },
+      { id: 'block_6', number: '6', name: 'Electrical Engineering', shortName: 'EE', x: 319, y: 217, color: '#A855F7', shapeType: 'polygon', polygon: '269,183 269,226 266,227 267,242 269,244 269,262 271,261 278,261 278,263 297,263 297,251 295,251 294,235 293,209 372,210 372,171 311,172 312,183' },
+      { id: 'block_5', number: '5', name: 'Mechanical Engineering', shortName: 'MECH', x: 294, y: 369, color: '#64748B', shapeType: 'polygon', polygon: '269,337 277,337 278,346 312,346 312,355 320,355 321,371 294,371 295,393 297,396 293,400 267,399 267,390 269,388 269,380 266,380 266,363 269,363' },
+      { id: 'block_4', number: '4', name: 'Bio Technology', shortName: 'BIO-TECH', x: 342, y: 320, color: '#10B981', shapeType: 'polygon', polygon: '312,294 311,303 322,303 321,337 329,337 329,346 346,345 346,320 372,319 372,294' },
+      { id: 'block_3', number: '3', name: 'Chemical Engineering', shortName: 'CHEM', x: 407, y: 256, color: '#F97316', shapeType: 'polygon', polygon: '380,226 389,225 389,234 423,234 423,243 432,244 433,260 406,261 406,286 380,286' },
+      { id: 'block_2', number: '2', name: 'Applied Humanities', shortName: 'HUMANITIES', x: 453, y: 209, color: '#EC4899', shapeType: 'polygon', polygon: '423,183 423,192 431,192 431,226 440,226 441,234 457,235 458,209 482,208 482,183' },
+      { id: 'block_1', number: '1', name: 'Admin Block', shortName: 'ADMIN', x: 518, y: 208, color: '#EAB308', shapeType: 'polygon', polygon: '491,183 491,234 519,235 544,211 543,183 535,183 535,180 500,181 500,184' },
+      { id: 'block_14', number: '14', name: 'Research & Consultancy', shortName: 'R&D', x: 557, y: 372, color: '#F472B6', shapeType: 'circle', circle: { cx: 557, cy: 372, r: 35 } },
+      { id: 'block_15', number: '15', name: 'Central Garden', shortName: 'GARDEN', x: 422, y: 386, color: '#15803D', shapeType: 'polygon', polygon: '328,389 355,415 374,395 416,437 397,456 410,469 515,363 516,302 416,302' },
+      { id: 'block_16', number: '16', name: 'Central Library', shortName: 'LIBRARY', x: 603, y: 490, color: '#059669', shapeType: 'polygon', polygon: '575,444 586,433 597,444 603,438 608,444 619,433 630,444 614,460 619,465 637,466 634,481 651,498 634,514 634,530 619,530 602,546 586,530 570,530 570,513 554,498 571,481 571,466 586,466 591,460' },
+      { id: 'block_13a', number: '13a', name: 'Classrooms A', shortName: 'CR-A', x: 353, y: 458, color: '#84CC16', shapeType: 'polygon', polygon: '326,451 359,485 373,472 371,470 379,462 347,430' },
+      { id: 'block_13b', number: '13b', name: 'Classrooms B', shortName: 'CR-B', x: 380, y: 430, color: '#84CC16', shapeType: 'polygon', polygon: '353,423 386,457 407,436 374,403' },
+      { id: 'block_13c', number: '13c', name: 'Classrooms C', shortName: 'CR-C', x: 403, y: 508, color: '#84CC16', shapeType: 'polygon', polygon: '383,508 396,494 397,495 399,494 398,493 404,487 411,493 411,496 416,501 418,501 423,507 423,510 418,515 403,529' },
+      { id: 'block_13d', number: '13d', name: 'Classrooms D', shortName: 'CR-D', x: 465, y: 502, color: '#84CC16', shapeType: 'polygon', polygon: '439,506 438,510 459,530 492,495 471,474' },
+      { id: 'block_13e', number: '13e', name: 'Classrooms E', shortName: 'CR-E', x: 470, y: 442, color: '#84CC16', shapeType: 'polygon', polygon: '431,460 443,473 450,468 457,475 464,468 457,461 463,455 449,442 470,422 482,435 488,429 496,437 503,431 495,423 501,417 487,404 508,383 529,405 433,500 429,500 423,494 424,493 418,487 417,488 411,481 411,479 417,473 419,474 430,462' },
+      { id: 'block_13f', number: '13f', name: 'Classrooms F', shortName: 'CR-F', x: 528, y: 438, color: '#84CC16', shapeType: 'polygon', polygon: '501,444 522,465 529,458 528,457 547,438 549,439 555,433 555,430 553,431 541,420 542,417 534,411 528,417 528,420 523,425 520,424' },
+      { id: 'block_stationery', number: '📚', name: 'Stationery & Xerox', shortName: 'STATIONERY', x: 474, y: 299, color: '#8B5CF6', shapeType: 'circle', circle: { cx: 474, cy: 299, r: 14 } }
+    ];
+
+    // ─── 2. DEFAULT PROPOSED ROUTES ────────────────────────────────────────────
+    const DEFAULT_PROPOSED_ROUTES = [
+      {
+        id: 'route_north_artery',
+        name: 'North Academic Arterial Road',
+        category: 'road',
+        color: '#38BDF8',
+        enabled: true,
+        nodes: [
+          { id: 'n_canteen', x: 78, y: 155 }, { id: 'n_bend_7173', x: 90, y: 129 }, { id: 'n_bend_6435', x: 135, y: 154 }, { id: 'n_junc_west', x: 178, y: 158 },
+          { id: 'n_cse_front', x: 227, y: 170 }, { id: 'n_junc_central', x: 260, y: 170 }, { id: 'n_ee_front', x: 319, y: 165 }, { id: 'n_chem_front', x: 407, y: 165 },
+          { id: 'n_humanities', x: 453, y: 170 }, { id: 'n_admin_front', x: 518, y: 170 }, { id: 'n_east_end', x: 565, y: 170 }
+        ]
+      },
+      {
+        id: 'route_west_corridor',
+        name: 'West Wing Corridor (M-Wing / IT / ECE)',
+        category: 'road',
+        color: '#818CF8',
+        enabled: true,
+        nodes: [
+          { id: 'n_junc_west', x: 135, y: 154 }, { id: 'w_mwing_entry', x: 149, y: 219 }, { id: 'w_it_entry', x: 150, y: 270 }, { id: 'w_ece_entry', x: 150, y: 340 },
+          { id: 'w_junc_workshop', x: 150, y: 400 }, { id: 'w_workshop_west', x: 244, y: 429 }, { id: 'n_bend_1286', x: 248, y: 456 }, { id: 'n_bend_9602', x: 264, y: 457 },
+          { id: 'n_bend_3653', x: 270, y: 485 }, { id: 'n_bend_5593', x: 285, y: 445 }, { id: 'w_civil_south', x: 270, y: 485 }
+        ]
+      },
+      {
+        id: 'route_central_spine',
+        name: 'Central Academic Spine (CSE-EE-Chem-Mech)',
+        category: 'road',
+        color: '#34D399',
+        enabled: true,
+        nodes: [
+          { id: 'n_junc_central', x: 260, y: 170 }, { id: 'c_mid_1', x: 260, y: 235 }, { id: 'c_mid_2', x: 260, y: 290 }, { id: 'c_mid_3', x: 260, y: 345 },
+          { id: 'c_garden_nw', x: 260, y: 400 }
+        ]
+      },
+      {
+        id: 'route_garden_perimeter',
+        name: 'Central Garden Outer Promenade',
+        category: 'walkway',
+        color: '#FBBF24',
+        enabled: true,
+        nodes: [
+          { id: 'c_mid_2', x: 150, y: 293 }, { id: 'n_bend_3817', x: 260, y: 290 }, { id: 'g_north_1', x: 375, y: 290 }, { id: 'g_north_2', x: 450, y: 290 },
+          { id: 'g_north_east', x: 525, y: 290 }, { id: 'g_east_rnd', x: 520, y: 360 }, { id: 'g_south_east', x: 500, y: 410 }, { id: 'g_south_mid', x: 415, y: 440 },
+          { id: 'g_south_west', x: 325, y: 395 }, { id: 'c_garden_nw', x: 260, y: 400 }
+        ]
+      },
+      {
+        id: 'route_classrooms_spine',
+        name: 'Block 13 Classrooms Wayfinding Avenue',
+        category: 'walkway',
+        color: '#A3E635',
+        enabled: true,
+        nodes: [
+          { id: 'g_south_west', x: 325, y: 395 }, { id: 'cr_13a_entry', x: 345, y: 425 }, { id: 'cr_13b_entry', x: 375, y: 460 }, { id: 'cr_mid_junc', x: 420, y: 470 },
+          { id: 'cr_13e_entry', x: 465, y: 460 }, { id: 'cr_13d_entry', x: 475, y: 505 }, { id: 'cr_east_exit', x: 535, y: 450 }
+        ]
+      },
+      {
+        id: 'route_library_avenue',
+        name: 'Library & South-East Campus Plaza',
+        category: 'road',
+        color: '#2DD4BF',
+        enabled: true,
+        nodes: [
+          { id: 'g_east_rnd', x: 520, y: 360 }, { id: 'cr_east_exit', x: 535, y: 450 }, { id: 'lib_west_plaza', x: 565, y: 475 }, { id: 'lib_main_entrance', x: 599, y: 420 },
+          { id: 'lib_south_walk', x: 539, y: 542 }
+        ]
+      },
+      {
+        id: 'route_workshop_civil_link',
+        name: 'Workshop to Civil & Mech Connector',
+        category: 'road',
+        color: '#FB923C',
+        enabled: true,
+        nodes: [
+          { id: 'w_junc_workshop', x: 150, y: 400 }, { id: 'w_mid_entry', x: 185, y: 400 }, { id: 'c_garden_nw', x: 260, y: 400 }, { id: 'civil_north_entry', x: 285, y: 445 },
+          { id: 'cr_13a_entry', x: 345, y: 425 }
+        ]
+      },
+      {
+        id: 'custom_1788860141045',
+        name: 'Exit Route 1',
+        category: 'road',
+        color: '#38BDF8',
+        enabled: true,
+        nodes: [
+          { id: 'pt_1788860114596_0', x: 565, y: 170 }, { id: 'pt_1788860117684_1', x: 589, y: 278 }, { id: 'pt_1788860123166_2', x: 636, y: 292 }, { id: 'pt_1788860124494_3', x: 677, y: 302 },
+          { id: 'pt_1788860125434_4', x: 712, y: 300 }, { id: 'pt_1788860126316_5', x: 751, y: 305 }
+        ]
+      },
+      {
+        id: 'custom_1788860172336',
+        name: 'Exit Route 2',
+        category: 'road',
+        color: '#38BDF8',
+        enabled: true,
+        nodes: [
+          { id: 'pt_1788860161794_0', x: 599, y: 420 }, { id: 'pt_1788860163397_1', x: 606, y: 387 }, { id: 'pt_1788860164441_2', x: 601, y: 352 }, { id: 'pt_1788860165422_3', x: 597, y: 320 },
+          { id: 'pt_1788860168859_4', x: 589, y: 278 }
+        ]
+      },
+      {
+        id: 'custom_1788860408656',
+        name: 'Civil To Library',
+        category: 'road',
+        color: '#38BDF8',
+        enabled: true,
+        nodes: [
+          { id: 'pt_1788860381223_0', x: 539, y: 542 }, { id: 'pt_1788860382386_1', x: 454, y: 550 }, { id: 'pt_1788860383705_2', x: 403, y: 553 }, { id: 'pt_1788860384642_3', x: 367, y: 555 },
+          { id: 'pt_1788860386435_4', x: 331, y: 552 }, { id: 'pt_1788860387442_5', x: 331, y: 524 }, { id: 'pt_1788860388309_6', x: 337, y: 498 }, { id: 'pt_1788860389539_7', x: 313, y: 469 },
+          { id: 'pt_1788860392421_8', x: 285, y: 453 }
+        ]
+      },
+      {
+        id: 'route_building_doorways',
+        name: 'Exact Building Doorstep Connectors',
+        category: 'connector',
+        color: '#F43F5E',
+        enabled: true,
+        nodes: [
+          { id: 'door_block_17', x: 78, y: 137 }, { id: 'n_bend_7173', x: 90, y: 129 }, { id: 'door_block_7', x: 227, y: 209 }, { id: 'n_cse_front', x: 227, y: 170 },
+          { id: 'door_block_8', x: 188, y: 252 }, { id: 'w_it_entry', x: 150, y: 270 }, { id: 'door_block_10', x: 124, y: 277 }, { id: 'w_it_entry', x: 150, y: 270 },
+          { id: 'door_block_9', x: 206, y: 348 }, { id: 'c_mid_3', x: 260, y: 345 }, { id: 'door_block_11', x: 187, y: 468 }, { id: 'n_bend_1286', x: 248, y: 456 },
+          { id: 'door_block_12', x: 272, y: 504 }, { id: 'n_bend_3653', x: 270, y: 485 }, { id: 'door_block_6', x: 319, y: 217 }, { id: 'n_ee_front', x: 319, y: 165 },
+          { id: 'door_block_5', x: 294, y: 369 }, { id: 'g_south_west', x: 325, y: 395 }, { id: 'door_block_4', x: 342, y: 320 }, { id: 'g_north_1', x: 375, y: 290 },
+          { id: 'door_block_3', x: 407, y: 256 }, { id: 'g_north_1', x: 375, y: 290 }, { id: 'door_block_2', x: 453, y: 209 }, { id: 'n_humanities', x: 453, y: 170 },
+          { id: 'door_block_1', x: 518, y: 208 }, { id: 'n_admin_front', x: 518, y: 170 }, { id: 'door_block_14', x: 557, y: 372 }, { id: 'g_east_rnd', x: 520, y: 360 },
+          { id: 'door_block_15', x: 422, y: 386 }, { id: 'g_south_mid', x: 415, y: 440 }, { id: 'door_block_16', x: 603, y: 490 }, { id: 'lib_west_plaza', x: 565, y: 475 },
+          { id: 'door_block_13a', x: 353, y: 458 }, { id: 'cr_13b_entry', x: 375, y: 460 }, { id: 'door_block_13b', x: 380, y: 430 }, { id: 'cr_13b_entry', x: 375, y: 460 },
+          { id: 'door_block_13c', x: 403, y: 508 }, { id: 'cr_mid_junc', x: 420, y: 470 }, { id: 'door_block_13d', x: 465, y: 502 }, { id: 'cr_13d_entry', x: 475, y: 505 },
+          { id: 'door_block_13e', x: 470, y: 442 }, { id: 'cr_13e_entry', x: 465, y: 460 }, { id: 'door_block_13f', x: 528, y: 438 }, { id: 'cr_east_exit', x: 535, y: 450 },
+          { id: 'door_block_stationery', x: 474, y: 299 }, { id: 'g_north_2', x: 450, y: 290 }
+        ]
+      }
+    ];
+
+    let currentRoutes = JSON.parse(JSON.stringify(DEFAULT_PROPOSED_ROUTES));
+    let layersVisible = { roads: true, connectors: true, labels: true };
+    let isDrawingMode = false;
+    let isRulerMode = false;
+    let rulerPoints = [];
+    let magneticSnap = true;
+    let newDrawingNodes = [];
+    let activeExportFormat = 'json';
+
+    // Dragging state for waypoints
+    let draggedNode = null; // { routeIdx, nodeIdx, el }
+    let selectedNodeInfo = null; // { routeIdx, nodeIdx }
+
+    // Transform state
+    let zoomLevel = 1.0;
+    let panX = 0, panY = 0;
+    let isPanning = false;
+    let dragStart = { x: 0, y: 0 };
+
+    // ─── 3. INITIALIZATION ──────────────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      loadCalibrations();
+      loadCustomLandmarks();
+      renderBuildings();
+      renderRoutes();
+      updateRouteList();
+      populateDropdowns();
+      renderCalibTab();
+      renderCustomPoiList();
+      setupPanZoomAndInteraction();
+      setupKeyboardShortcuts();
+    });
+
+    // ─── 4. RENDERING BUILDINGS ────────────────────────────────────────────────
+    function renderBuildings() {
+      const g = document.getElementById('buildingsLayer');
+      g.innerHTML = '';
+
+      getAllBuildings().forEach(b => {
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('id', `bldg_${b.id}`);
+        group.style.cursor = 'pointer';
+        group.onclick = () => onBuildingClick(b);
+
+        if (b.isCustomPoi) {
+          // Custom Landmark Badge
+          const pinGlow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          pinGlow.setAttribute('cx', b.x);
+          pinGlow.setAttribute('cy', b.y);
+          pinGlow.setAttribute('r', '15');
+          pinGlow.setAttribute('fill', b.color || '#8B5CF6');
+          pinGlow.setAttribute('opacity', '0.28');
+          group.appendChild(pinGlow);
+
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('cx', b.x);
+          circle.setAttribute('cy', b.y);
+          circle.setAttribute('r', '11');
+          circle.setAttribute('fill', b.color || '#8B5CF6');
+          circle.setAttribute('stroke', '#FFFFFF');
+          circle.setAttribute('stroke-width', '1.5');
+          group.appendChild(circle);
+
+          const icon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          icon.setAttribute('x', b.x);
+          icon.setAttribute('y', b.y + 4);
+          icon.setAttribute('font-size', '10');
+          icon.setAttribute('text-anchor', 'middle');
+          icon.setAttribute('pointer-events', 'none');
+          icon.textContent = b.icon || '🏪';
+          group.appendChild(icon);
+
+          const nameText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          nameText.setAttribute('x', b.x);
+          nameText.setAttribute('y', b.y + 20);
+          nameText.setAttribute('fill', '#FFFFFF');
+          nameText.setAttribute('font-size', '8');
+          nameText.setAttribute('font-weight', 'bold');
+          nameText.setAttribute('text-anchor', 'middle');
+          nameText.setAttribute('pointer-events', 'none');
+          nameText.classList.add('bldg-subtext');
+          nameText.textContent = b.name;
+          group.appendChild(nameText);
+
+          g.appendChild(group);
+          return;
+        }
+
+        if (b.shapeType === 'circle' && b.circle) {
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('cx', b.circle.cx);
+          circle.setAttribute('cy', b.circle.cy);
+          circle.setAttribute('r', b.circle.r);
+          circle.setAttribute('fill', b.color);
+          circle.setAttribute('opacity', '0.8');
+          circle.setAttribute('stroke', '#FFFFFF');
+          circle.setAttribute('stroke-width', '1.5');
+          group.appendChild(circle);
+        } else if (b.polygon) {
+          const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+          poly.setAttribute('points', b.polygon);
+          poly.setAttribute('fill', b.color);
+          poly.setAttribute('opacity', '0.8');
+          poly.setAttribute('stroke', '#FFFFFF');
+          poly.setAttribute('stroke-width', '1.5');
+          group.appendChild(poly);
+        }
+
+        // Text label
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', b.x);
+        text.setAttribute('y', b.y + 4);
+        text.setAttribute('fill', '#FFFFFF');
+        text.setAttribute('font-size', '11');
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('pointer-events', 'none');
+        text.textContent = b.number;
+        group.appendChild(text);
+
+        const subText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        subText.setAttribute('x', b.x);
+        subText.setAttribute('y', b.y + 16);
+        subText.setAttribute('fill', 'rgba(255,255,255,0.75)');
+        subText.setAttribute('font-size', '7');
+        subText.setAttribute('font-weight', '600');
+        subText.setAttribute('text-anchor', 'middle');
+        subText.setAttribute('pointer-events', 'none');
+        subText.classList.add('bldg-subtext');
+        subText.textContent = b.shortName;
+        group.appendChild(subText);
+
+        if (typeof calibratedGps !== 'undefined' && calibratedGps[b.id]) {
+          const pin = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          pin.setAttribute('cx', b.x + 10);
+          pin.setAttribute('cy', b.y - 10);
+          pin.setAttribute('r', '4');
+          pin.setAttribute('fill', '#10B981');
+          pin.setAttribute('stroke', '#FFFFFF');
+          pin.setAttribute('stroke-width', '1.2');
+          group.appendChild(pin);
+        }
+
+        g.appendChild(group);
+      });
+    }
+
+    // ─── 5. RENDERING ROUTES WITH INTERACTIVE WAYPOINTS ────────────────────────
+    function renderRoutes() {
+      const g = document.getElementById('routesLayer');
+      g.innerHTML = '';
+
+      currentRoutes.forEach((route, routeIdx) => {
+        if (!route.enabled) return;
+        if (route.category === 'road' && !layersVisible.roads) return;
+        if (route.category === 'connector' && !layersVisible.connectors) return;
+
+        const routeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        routeGroup.setAttribute('id', `rg_${route.id}`);
+
+        const pointsStr = route.nodes.map(n => `${n.x},${n.y}`).join(' ');
+
+        // Glow Layer
+        const glow = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        glow.setAttribute('points', pointsStr);
+        glow.setAttribute('fill', 'none');
+        glow.setAttribute('stroke', route.color);
+        glow.setAttribute('stroke-width', route.category === 'connector' ? '4' : '8');
+        glow.setAttribute('opacity', '0.22');
+        glow.setAttribute('stroke-linecap', 'round');
+        glow.setAttribute('stroke-linejoin', 'round');
+        routeGroup.appendChild(glow);
+
+        // Core Polyline
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        line.setAttribute('points', pointsStr);
+        line.setAttribute('fill', 'none');
+        line.setAttribute('stroke', route.color);
+        line.setAttribute('stroke-width', route.category === 'connector' ? '2.5' : '4');
+        line.setAttribute('stroke-linecap', 'round');
+        line.setAttribute('stroke-linejoin', 'round');
+        if (route.category === 'connector') {
+          line.setAttribute('stroke-dasharray', '4,4');
+        }
+        routeGroup.appendChild(line);
+
+        // Hit-area line for clicking directly on routes to select or insert waypoints
+        const hitLine = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        hitLine.setAttribute('points', pointsStr);
+        hitLine.setAttribute('fill', 'none');
+        hitLine.setAttribute('stroke', 'transparent');
+        hitLine.setAttribute('stroke-width', '18');
+        hitLine.setAttribute('stroke-linecap', 'round');
+        hitLine.setAttribute('stroke-linejoin', 'round');
+        hitLine.style.cursor = isRouteEditMode ? 'copy' : 'pointer';
+        hitLine.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const svgPt = clientToSvg(e.clientX, e.clientY);
+          handleRouteLineClick(routeIdx, svgPt);
+        });
+        routeGroup.appendChild(hitLine);
+
+        // Interactive Waypoint Nodes (Draggable + Selectable)
+        route.nodes.forEach((node, nodeIdx) => {
+          const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          c.setAttribute('cx', node.x);
+          c.setAttribute('cy', node.y);
+          c.setAttribute('r', route.category === 'connector' ? '3.5' : '4.5');
+          c.setAttribute('fill', '#FFFFFF');
+          c.setAttribute('stroke', route.color);
+          c.setAttribute('stroke-width', '1.5');
+          c.classList.add('waypoint-node');
+
+          const isSel = selectedNodeInfo && selectedNodeInfo.routeIdx === routeIdx && selectedNodeInfo.nodeIdx === nodeIdx;
+          if (isSel) {
+            c.classList.add('selected-node');
+          }
+
+          // Right-click to delete node
+          c.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (isRouteEditMode) {
+              pushUndoState();
+              route.nodes.splice(nodeIdx, 1);
+              if (selectedNodeInfo && selectedNodeInfo.routeIdx === routeIdx && selectedNodeInfo.nodeIdx === nodeIdx) {
+                selectedNodeInfo = null;
+              }
+              renderRoutes();
+              updateRouteList();
+              document.getElementById('statusText').textContent = 'Removed node from "' + route.name + '".';
+            }
+          });
+
+          // Node Dragging mousedown handler
+          c.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            pushUndoState();
+            selectNode(routeIdx, nodeIdx);
+            draggedNode = { routeIdx, nodeIdx, el: c };
+            c.classList.add('active-drag');
+            document.getElementById('statusText').textContent = `Moving: ${node.id} (${route.name}) • Ctrl+Z to undo`;
+          });
+
+          routeGroup.appendChild(c);
+        });
+
+        g.appendChild(routeGroup);
+      });
+    }
+
+    // ─── 6. ROUTE LIST & MANAGEMENT ───────────────────────────────────────────
+    function updateRouteList() {
+      const container = document.getElementById('routesList');
+      document.getElementById('routeCount').textContent = currentRoutes.length;
+      container.innerHTML = '';
+
+      currentRoutes.forEach((route, idx) => {
+        const item = document.createElement('div');
+        item.className = 'route-item';
+        item.innerHTML = `
+          <div class="route-info" onclick="highlightRoute(${idx})">
+            <span class="route-name" style="color:${route.color}">${route.name}</span>
+            <span class="route-meta">${route.nodes.length} nodes • ${route.category}</span>
+          </div>
+          <div class="route-actions">
+            <input type="checkbox" class="route-toggle" ${route.enabled ? 'checked' : ''} onchange="toggleRoute(${idx})">
+            <button class="btn-icon" title="Discard route" onclick="discardRoute(${idx})">
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function toggleRoute(idx) {
+      currentRoutes[idx].enabled = !currentRoutes[idx].enabled;
+      renderRoutes();
+    }
+
+    function discardRoute(idx) {
+      const name = currentRoutes[idx].name;
+      if (confirm(`Discard route "${name}"? It will be completely removed.`)) {
+        pushUndoState();
+        currentRoutes.splice(idx, 1);
+        selectedNodeInfo = null;
+        updateNodeInspector();
+        renderRoutes();
+        updateRouteList();
+        clearShortestPath();
+      }
+    }
+
+    function highlightRoute(idx) {
+      document.querySelectorAll('.route-item').forEach((el, i) => {
+        el.classList.toggle('selected', i === idx);
+      });
+    }
+
+    function resetAllRoutes() {
+      if (confirm('Reset to Antigravity default proposed logical routes?')) {
+        pushUndoState();
+        currentRoutes = JSON.parse(JSON.stringify(DEFAULT_PROPOSED_ROUTES));
+        selectedNodeInfo = null;
+        updateNodeInspector();
+        renderRoutes();
+        updateRouteList();
+        clearShortestPath();
+      }
+    }
+
+    // ─── 6B. UNDO SYSTEM & INTERACTIVE ROUTE EDITING ──────────────────────────
+    const undoStack = [];
+    const MAX_UNDO = 40;
+    let isRouteEditMode = false;
+
+    function pushUndoState() {
+      if (undoStack.length >= MAX_UNDO) undoStack.shift();
+      undoStack.push(JSON.stringify(currentRoutes));
+      updateUndoButton();
+    }
+
+    function undo() {
+      if (undoStack.length === 0) {
+        document.getElementById('statusText').textContent = 'ℹ️ Nothing to undo';
+        return;
+      }
+      const previousState = undoStack.pop();
+      currentRoutes = JSON.parse(previousState);
+      selectedNodeInfo = null;
+      renderRoutes();
+      updateRouteList();
+      updateNodeInspector();
+      clearShortestPath();
+      updateUndoButton();
+      document.getElementById('statusText').textContent = '↩️ Action undone! (Ctrl+Z)';
+    }
+
+    function updateUndoButton() {
+      const btn = document.getElementById('btnUndo');
+      if (btn) {
+        btn.textContent = undoStack.length > 0 ? `↩️ Undo (${undoStack.length})` : '↩️ Undo';
+        btn.style.opacity = undoStack.length > 0 ? '1' : '0.6';
+      }
+    }
+
+    function toggleRouteEditMode() {
+      isRouteEditMode = !isRouteEditMode;
+      const btn = document.getElementById('btnRouteEditMode');
+      const status = document.getElementById('statusText');
+      if (isRouteEditMode) {
+        isDrawingMode = false;
+        isRulerMode = false;
+        isPoiClickMode = false;
+        btn.textContent = '✏️ Edit Route: ON';
+        btn.classList.add('active');
+        btn.style.background = '#F59E0B';
+        btn.style.color = '#000';
+        status.textContent = '✏️ Route Edit ON: Click path to add node | Right-click node to delete | Drag node to move!';
+      } else {
+        btn.textContent = '✏️ Edit Route: OFF';
+        btn.classList.remove('active');
+        btn.style.background = 'transparent';
+        btn.style.color = '#94A3B8';
+        status.textContent = 'Ready • Drag waypoints to reposition • Scroll to zoom';
+      }
+      renderRoutes();
+    }
+
+    function distanceToSegment(p, a, b) {
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const lenSq = dx * dx + dy * dy;
+      if (lenSq === 0) return { dist: Math.hypot(p.x - a.x, p.y - a.y), projX: a.x, projY: a.y };
+      let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq;
+      t = Math.max(0, Math.min(1, t));
+      const projX = a.x + t * dx;
+      const projY = a.y + t * dy;
+      return { dist: Math.hypot(p.x - projX, p.y - projY), projX, projY };
+    }
+
+    function handleRouteLineClick(routeIdx, svgPt) {
+      const route = currentRoutes[routeIdx];
+      if (!route) return;
+
+      highlightRoute(routeIdx);
+
+      if (isRouteEditMode) {
+        pushUndoState();
+
+        let bestIdx = 0;
+        let bestDist = Infinity;
+        let bestPt = { x: Math.round(svgPt.x), y: Math.round(svgPt.y) };
+
+        for (let i = 0; i < route.nodes.length - 1; i++) {
+          const seg = distanceToSegment(svgPt, route.nodes[i], route.nodes[i+1]);
+          if (seg.dist < bestDist) {
+            bestDist = seg.dist;
+            bestIdx = i;
+            bestPt = { x: Math.round(seg.projX), y: Math.round(seg.projY) };
+          }
+        }
+
+        const newNode = {
+          id: `n_bend_${Date.now().toString().slice(-4)}`,
+          x: bestPt.x,
+          y: bestPt.y
+        };
+
+        route.nodes.splice(bestIdx + 1, 0, newNode);
+        renderRoutes();
+        updateRouteList();
+        selectNode(routeIdx, bestIdx + 1);
+        document.getElementById('statusText').textContent = `✨ Added bend waypoint to "${route.name}". Drag it to reshape! (Ctrl+Z to undo)`;
+      } else {
+        document.getElementById('statusText').textContent = `Selected "${route.name}" (${route.nodes.length} nodes). Turn on ✏️ Edit Route to insert bend points!`;
+      }
+    }
+
+    // ─── 7. DIJKSTRA ENGINE ───────────────────────────────────────────────────
+    function buildGraph() {
+      const nodesMap = new Map();
+      const adj = new Map();
+
+      function addNode(n) {
+        if (!nodesMap.has(n.id)) {
+          nodesMap.set(n.id, n);
+          adj.set(n.id, []);
+        }
+      }
+
+      function addEdge(n1, n2) {
+        addNode(n1);
+        addNode(n2);
+        const dist = Math.hypot(n1.x - n2.x, n1.y - n2.y);
+        adj.get(n1.id).push({ to: n2.id, weight: dist });
+        adj.get(n2.id).push({ to: n1.id, weight: dist });
+      }
+
+      currentRoutes.forEach(route => {
+        if (!route.enabled) return;
+        if (route.category === 'connector') {
+          for (let i = 0; i < route.nodes.length; i += 2) {
+            if (i + 1 < route.nodes.length) {
+              addEdge(route.nodes[i], route.nodes[i+1]);
+            }
+          }
+        } else {
+          for (let i = 0; i < route.nodes.length - 1; i++) {
+            addEdge(route.nodes[i], route.nodes[i+1]);
+          }
+        }
+      });
+
+      // Auto stitch overlapping / close nodes across routes (< 16px)
+      const allNodes = Array.from(nodesMap.values());
+      for (let i = 0; i < allNodes.length; i++) {
+        for (let j = i + 1; j < allNodes.length; j++) {
+          const dist = Math.hypot(allNodes[i].x - allNodes[j].x, allNodes[i].y - allNodes[j].y);
+          if (dist < 16) {
+            adj.get(allNodes[i].id).push({ to: allNodes[j].id, weight: dist });
+            adj.get(allNodes[j].id).push({ to: allNodes[i].id, weight: dist });
+          }
+        }
+      }
+
+      return { nodesMap, adj };
+    }
+
+    function dijkstra(startId, endId) {
+      const { nodesMap, adj } = buildGraph();
+      if (!nodesMap.has(startId) || !nodesMap.has(endId)) return null;
+
+      const distances = new Map();
+      const previous = new Map();
+      const unvisited = new Set(nodesMap.keys());
+
+      nodesMap.forEach((_, id) => distances.set(id, Infinity));
+      distances.set(startId, 0);
+
+      while (unvisited.size > 0) {
+        let current = null;
+        let minD = Infinity;
+
+        unvisited.forEach(id => {
+          if (distances.get(id) < minD) {
+            minD = distances.get(id);
+            current = id;
+          }
+        });
+
+        if (current === null || minD === Infinity) break;
+        if (current === endId) break;
+
+        unvisited.delete(current);
+
+        const neighbors = adj.get(current) || [];
+        neighbors.forEach(edge => {
+          if (unvisited.has(edge.to)) {
+            const alt = distances.get(current) + edge.weight;
+            if (alt < distances.get(edge.to)) {
+              distances.set(edge.to, alt);
+              previous.set(edge.to, current);
+            }
+          }
+        });
+      }
+
+      if (distances.get(endId) === Infinity) return null;
+
+      const path = [];
+      let curr = endId;
+      while (curr) {
+        path.unshift(nodesMap.get(curr));
+        curr = previous.get(curr);
+      }
+
+      return {
+        path,
+        totalDistance: distances.get(endId),
+        meters: Math.round(distances.get(endId) * 0.5),
+        minutes: Math.max(1, Math.round((distances.get(endId) * 0.5) / 80))
+      };
+    }
+
+    function runPathfindingTest() {
+      const startBldgId = document.getElementById('selectStart').value;
+      const endBldgId = document.getElementById('selectEnd').value;
+
+      if (startBldgId === endBldgId) {
+        alert('Please pick two different buildings.');
+        return;
+      }
+
+      const res = dijkstra(`door_${startBldgId}`, `door_${endBldgId}`);
+      const resCard = document.getElementById('testResultCard');
+      const stats = document.getElementById('routeStats');
+
+      if (!res) {
+        resCard.style.display = 'block';
+        stats.innerHTML = `<span style="color:#EF4444; font-weight:bold;">No route found!</span><br>Ensure door connectors and road junctions are connected between these blocks.`;
+        clearShortestPath();
+        return;
+      }
+
+      resCard.style.display = 'block';
+      stats.innerHTML = `
+        <b>Total Distance:</b> ${res.meters} meters<br>
+        <b>Est. Walk Time:</b> ~${res.minutes} min<br>
+        <b>Path Waypoints:</b> ${res.path.length} nodes<br>
+        <span style="font-size:11px; color:#94A3B8;">${res.path.map(n => n.id).join(' → ')}</span>
+      `;
+
+      drawShortestPath(res.path);
+    }
+
+    function drawShortestPath(path) {
+      const g = document.getElementById('activeRouteLayer');
+      g.innerHTML = '';
+
+      const pts = path.map(n => `${n.x},${n.y}`).join(' ');
+
+      const glow = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      glow.setAttribute('points', pts);
+      glow.setAttribute('fill', 'none');
+      glow.setAttribute('stroke', '#6366F1');
+      glow.setAttribute('stroke-width', '10');
+      glow.setAttribute('opacity', '0.45');
+      glow.setAttribute('stroke-linecap', 'round');
+      g.appendChild(glow);
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      line.setAttribute('points', pts);
+      line.setAttribute('fill', 'none');
+      line.setAttribute('stroke', '#A5B4FC');
+      line.setAttribute('stroke-width', '4');
+      line.setAttribute('stroke-dasharray', '8,4');
+      line.setAttribute('stroke-linecap', 'round');
+      g.appendChild(line);
+
+      function makePin(pt, color, label) {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', pt.x);
+        circle.setAttribute('cy', pt.y);
+        circle.setAttribute('r', '7');
+        circle.setAttribute('fill', color);
+        circle.setAttribute('stroke', '#FFF');
+        circle.setAttribute('stroke-width', '2');
+        g.appendChild(circle);
+      }
+      makePin(path[0], '#10B981', 'A');
+      makePin(path[path.length - 1], '#EF4444', 'B');
+    }
+
+    function clearShortestPath() {
+      document.getElementById('activeRouteLayer').innerHTML = '';
+      document.getElementById('testResultCard').style.display = 'none';
+    }
+
+    // ─── 8. INTERACTIVE PAN, ZOOM & DRAGGING ──────────────────────────────────
+    function setupPanZoomAndInteraction() {
+      const viewport = document.getElementById('viewport');
+      const g = document.getElementById('transformGroup');
+
+      function updateTransform() {
+        g.setAttribute('transform', `translate(${panX}, ${panY}) scale(${zoomLevel})`);
+      }
+
+      viewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomDelta = e.deltaY < 0 ? 1.15 : 0.85;
+        zoomLevel = Math.max(0.5, Math.min(zoomLevel * zoomDelta, 4.5));
+        updateTransform();
+      });
+
+      viewport.addEventListener('mousedown', (e) => {
+        const svgPt = clientToSvg(e.clientX, e.clientY);
+
+        if (isPoiClickMode) {
+          handlePoiClickPlacement(svgPt);
+          return;
+        }
+
+        if (isDrawingMode) {
+          addDrawingWaypoint(svgPt);
+          return;
+        }
+
+        if (isRulerMode) {
+          handleRulerClick(svgPt);
+          return;
+        }
+
+        // Panning the canvas
+        isPanning = true;
+        dragStart = { x: e.clientX - panX, y: e.clientY - panY };
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        const svgPt = clientToSvg(e.clientX, e.clientY);
+
+        // Dragging waypoint
+        if (draggedNode) {
+          let nx = Math.round(svgPt.x);
+          let ny = Math.round(svgPt.y);
+
+          // Magnetic snapping to other nodes
+          if (magneticSnap) {
+            const snapped = findSnapCoordinate(nx, ny, draggedNode.routeIdx, draggedNode.nodeIdx);
+            if (snapped) {
+              nx = snapped.x;
+              ny = snapped.y;
+            }
+          }
+
+          const node = currentRoutes[draggedNode.routeIdx].nodes[draggedNode.nodeIdx];
+          node.x = nx;
+          node.y = ny;
+
+          renderRoutes();
+          updateNodeInspector();
+          if (document.getElementById('activeRouteLayer').innerHTML) {
+            runPathfindingTest();
+          }
+          return;
+        }
+
+        // Panning
+        if (isPanning) {
+          panX = e.clientX - dragStart.x;
+          panY = e.clientY - dragStart.y;
+          updateTransform();
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (draggedNode) {
+          draggedNode.el?.classList.remove('active-drag');
+          draggedNode = null;
+          document.getElementById('statusText').textContent = 'Ready • Drag waypoints to reposition • Scroll to zoom';
+        }
+        isPanning = false;
+      });
+    }
+
+    function clientToSvg(cx, cy) {
+      const svg = document.getElementById('campusMap');
+      const pt = svg.createSVGPoint();
+      pt.x = cx;
+      pt.y = cy;
+      const g = document.getElementById('transformGroup');
+      return pt.matrixTransform(g.getScreenCTM().inverse());
+    }
+
+    function findSnapCoordinate(x, y, ignoreRouteIdx, ignoreNodeIdx) {
+      const SNAP_RADIUS = 12;
+      for (let r = 0; r < currentRoutes.length; r++) {
+        const route = currentRoutes[r];
+        if (!route.enabled) continue;
+        for (let n = 0; n < route.nodes.length; n++) {
+          if (r === ignoreRouteIdx && n === ignoreNodeIdx) continue;
+          const node = route.nodes[n];
+          if (Math.hypot(node.x - x, node.y - y) < SNAP_RADIUS) {
+            return { x: node.x, y: node.y };
+          }
+        }
+      }
+      return null;
+    }
+
+    // ─── 9. NODE SELECTION & DELETION ─────────────────────────────────────────
+    function selectNode(routeIdx, nodeIdx) {
+      selectedNodeInfo = { routeIdx, nodeIdx };
+      updateNodeInspector();
+      renderRoutes();
+    }
+
+    function updateNodeInspector() {
+      const insp = document.getElementById('nodeInspector');
+      const btnDel = document.getElementById('btnDeleteNode');
+      const status = document.getElementById('nodeActionStatus');
+
+      if (!selectedNodeInfo || !currentRoutes[selectedNodeInfo.routeIdx]) {
+        insp.style.display = 'none';
+        btnDel.disabled = true;
+        status.textContent = 'No node currently selected. Click any node on the map.';
+        return;
+      }
+
+      const route = currentRoutes[selectedNodeInfo.routeIdx];
+      const node = route.nodes[selectedNodeInfo.nodeIdx];
+
+      insp.style.display = 'flex';
+      document.getElementById('inspRouteName').textContent = route.name;
+      document.getElementById('inspCoords').textContent = `Node: ${node.id} (${node.x}, ${node.y})`;
+
+      btnDel.disabled = false;
+      status.innerHTML = `Selected <b>${node.id}</b> in <i>${route.name}</i>`;
+    }
+
+    function deleteSelectedNode() {
+      if (!selectedNodeInfo) return;
+      const { routeIdx, nodeIdx } = selectedNodeInfo;
+      const route = currentRoutes[routeIdx];
+
+      if (route.nodes.length <= 2) {
+        if (confirm(`This will leave route "${route.name}" with fewer than 2 nodes. Discard entire route?`)) {
+          discardRoute(routeIdx);
+        }
+        return;
+      }
+
+      pushUndoState();
+      route.nodes.splice(nodeIdx, 1);
+      selectedNodeInfo = null;
+      updateNodeInspector();
+      renderRoutes();
+      updateRouteList();
+      clearShortestPath();
+    }
+
+    function setupKeyboardShortcuts() {
+      window.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+          e.preventDefault();
+          undo();
+          return;
+        }
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          if (selectedNodeInfo && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            deleteSelectedNode();
+          }
+        }
+        if (e.key === 'Escape') {
+          cancelDrawing();
+          selectedNodeInfo = null;
+          updateNodeInspector();
+          renderRoutes();
+        }
+      });
+    }
+
+    // ─── 10. DRAWING & RULER TOOLS ────────────────────────────────────────────
+    function toggleDrawingMode() {
+      isDrawingMode = !isDrawingMode;
+      const btn = document.getElementById('btnDraw');
+      const status = document.getElementById('statusText');
+
+      if (isDrawingMode) {
+        isRulerMode = false;
+        btn.textContent = 'Finish & Save';
+        btn.style.background = '#10B981';
+        status.textContent = '✍️ Drawing Active: Click map to place nodes (magnetic snap on)';
+        newDrawingNodes = [];
+      } else {
+        saveNewRoute();
+        btn.textContent = 'Start Drawing';
+        btn.style.background = '#6366F1';
+        status.textContent = 'Ready • Drag waypoints to reposition • Scroll to zoom';
+      }
+    }
+
+    function addDrawingWaypoint(pt) {
+      let nx = Math.round(pt.x);
+      let ny = Math.round(pt.y);
+
+      if (magneticSnap) {
+        const snap = findSnapCoordinate(nx, ny, -1, -1);
+        if (snap) {
+          nx = snap.x;
+          ny = snap.y;
+        }
+      }
+
+      newDrawingNodes.push({ id: `pt_${Date.now()}_${newDrawingNodes.length}`, x: nx, y: ny });
+      renderDrawingPreview();
+      document.getElementById('drawNodeCount').textContent = `${newDrawingNodes.length} points plotted`;
+    }
+
+    function cancelDrawing() {
+      isDrawingMode = false;
+      newDrawingNodes = [];
+      document.getElementById('drawingLayer').innerHTML = '';
+      document.getElementById('drawNodeCount').textContent = '';
+      const btn = document.getElementById('btnDraw');
+      btn.textContent = 'Start Drawing';
+      btn.style.background = '#6366F1';
+    }
+
+    function saveNewRoute() {
+      if (newDrawingNodes.length < 2) {
+        cancelDrawing();
+        return;
+      }
+      pushUndoState();
+      const name = document.getElementById('newRouteName').value.trim() || `Walkway #${currentRoutes.length + 1}`;
+      const cat = document.getElementById('newRouteCategory').value;
+      const colors = { road: '#38BDF8', walkway: '#A3E635', connector: '#F43F5E' };
+
+      currentRoutes.push({
+        id: `custom_${Date.now()}`,
+        name,
+        category: cat,
+        color: colors[cat] || '#E879F9',
+        enabled: true,
+        nodes: [...newDrawingNodes]
+      });
+
+      cancelDrawing();
+      renderRoutes();
+      updateRouteList();
+      switchTab('routes');
+    }
+
+    function renderDrawingPreview() {
+      const g = document.getElementById('drawingLayer');
+      g.innerHTML = '';
+      if (newDrawingNodes.length === 0) return;
+
+      const pts = newDrawingNodes.map(n => `${n.x},${n.y}`).join(' ');
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      line.setAttribute('points', pts);
+      line.setAttribute('fill', 'none');
+      line.setAttribute('stroke', '#E879F9');
+      line.setAttribute('stroke-width', '3');
+      line.setAttribute('stroke-dasharray', '6,3');
+      g.appendChild(line);
+
+      newDrawingNodes.forEach(n => {
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('cx', n.x);
+        c.setAttribute('cy', n.y);
+        c.setAttribute('r', '4');
+        c.setAttribute('fill', '#FFFFFF');
+        c.setAttribute('stroke', '#E879F9');
+        c.setAttribute('stroke-width', '2');
+        g.appendChild(c);
+      });
+    }
+
+    // Ruler
+    function toggleRulerMode() {
+      isRulerMode = !isRulerMode;
+      rulerPoints = [];
+      const btn = document.getElementById('btnRuler');
+      document.getElementById('rulerResult').textContent = '';
+      if (isRulerMode) {
+        isDrawingMode = false;
+        btn.textContent = 'Cancel Ruler';
+        btn.style.background = '#10B981';
+        btn.style.color = '#FFF';
+        document.getElementById('statusText').textContent = '📏 Ruler Mode: Click 2 points on map to measure distance';
+      } else {
+        btn.textContent = 'Activate Ruler';
+        btn.style.background = 'rgba(255,255,255,0.06)';
+        document.getElementById('drawingLayer').innerHTML = '';
+      }
+    }
+
+    function handleRulerClick(pt) {
+      rulerPoints.push(pt);
+      if (rulerPoints.length === 1) {
+        document.getElementById('statusText').textContent = '📏 Ruler: Click the second point';
+      } else if (rulerPoints.length === 2) {
+        const dPix = Math.hypot(rulerPoints[1].x - rulerPoints[0].x, rulerPoints[1].y - rulerPoints[0].y);
+        const dMeters = Math.round(dPix * 0.5);
+        document.getElementById('rulerResult').textContent = `Distance: ~${dMeters} meters (${Math.round(dPix)} px)`;
+        
+        // Draw ruler line
+        const g = document.getElementById('drawingLayer');
+        g.innerHTML = '';
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', rulerPoints[0].x);
+        line.setAttribute('y1', rulerPoints[0].y);
+        line.setAttribute('x2', rulerPoints[1].x);
+        line.setAttribute('y2', rulerPoints[1].y);
+        line.setAttribute('stroke', '#34D399');
+        line.setAttribute('stroke-width', '3');
+        line.setAttribute('stroke-dasharray', '5,5');
+        g.appendChild(line);
+
+        rulerPoints = [];
+      }
+    }
+
+    function toggleMagneticSnap() {
+      magneticSnap = !magneticSnap;
+      document.getElementById('btnMagneticSnap').textContent = `🧲 Snap: ${magneticSnap ? 'ON' : 'OFF'}`;
+      document.getElementById('btnMagneticSnap').classList.toggle('active', magneticSnap);
+    }
+
+    function resetZoom() {
+      zoomLevel = 1.0;
+      panX = 0;
+      panY = 0;
+      document.getElementById('transformGroup').setAttribute('transform', '');
+    }
+
+    // ─── 11. GPS CALIBRATION STATE & LOGIC ────────────────────────────────────
+    const CALIB_STORAGE_KEY = 'CAMPUS_STUDIO_GPS_CALIBRATIONS';
+    const DEFAULT_CALIBRATED_GPS = {
+      'block_17': { latitude: 22.2643869, longitude: 70.7105637, accuracy: 97.8, timestamp: '2026-09-08T07:43:58.512Z', method: 'field_captured' },
+      'block_7':  { latitude: 22.2644470, longitude: 70.7105838, accuracy: 15.3, timestamp: '2026-09-08T08:11:00.843Z', method: 'field_captured' },
+      'block_8':  { latitude: 22.2644186, longitude: 70.7105841, accuracy: 16.3, timestamp: '2026-09-08T08:11:17.754Z', method: 'field_captured' },
+      'block_10': { latitude: 22.2640071, longitude: 70.7110983, accuracy: 82.4, timestamp: '2026-09-08T08:22:07.082Z', method: 'field_captured' },
+      'block_9':  { latitude: 22.2639702, longitude: 70.7110926, accuracy: 62.4, timestamp: '2026-09-08T08:21:23.270Z', method: 'field_captured' },
+      'block_11': { latitude: 22.2639796, longitude: 70.7111171, accuracy: 55.0, timestamp: '2026-09-08T08:20:13.042Z', method: 'field_captured' },
+      'block_12': { latitude: 22.2639722, longitude: 70.7112840, accuracy: 68.4, timestamp: '2026-09-08T08:20:38.003Z', method: 'field_captured' },
+      'block_5':  { latitude: 22.2644395, longitude: 70.7110064, accuracy: 56.5, timestamp: '2026-09-08T08:23:43.480Z', method: 'field_captured' },
+      'block_4':  { latitude: 22.2645372, longitude: 70.7111940, accuracy: 53.4, timestamp: '2026-09-08T08:24:24.789Z', method: 'field_captured' },
+      'block_3':  { latitude: 22.2647752, longitude: 70.7112053, accuracy: 44.5, timestamp: '2026-09-08T08:25:00.931Z', method: 'field_captured' },
+      'block_1':  { latitude: 22.2650616, longitude: 70.7113240, accuracy: 26.4, timestamp: '2026-09-08T08:28:45.795Z', method: 'field_captured' },
+      'block_15': { latitude: 22.2647598, longitude: 70.7112203, accuracy: 32.4, timestamp: '2026-09-08T07:49:29.867Z', method: 'field_captured' },
+      'block_16': { latitude: 22.2648304, longitude: 70.7119777, accuracy: 68.4, timestamp: '2026-09-08T07:50:59.628Z', method: 'field_captured' },
+      'block_13a':{ latitude: 22.2647858, longitude: 70.7113720, accuracy: 80.6, timestamp: '2026-09-08T08:19:08.683Z', method: 'field_captured' },
+      'block_13b':{ latitude: 22.2647604, longitude: 70.7111962, accuracy: 84.1, timestamp: '2026-09-08T08:18:47.454Z', method: 'field_captured' },
+      'block_13e':{ latitude: 22.2646504, longitude: 70.7112207, accuracy: 47.3, timestamp: '2026-09-08T08:18:07.835Z', method: 'field_captured' },
+      'block_13f':{ latitude: 22.2647793, longitude: 70.7113793, accuracy: 77.6, timestamp: '2026-09-08T08:17:33.572Z', method: 'field_captured' }
+    };
+    let calibratedGps = Object.assign({}, DEFAULT_CALIBRATED_GPS);
+    let currentActiveTab = 'routes';
+    let currentExportMode = 'routes'; // 'routes' or 'gps'
+
+    function loadCalibrations() {
+      try {
+        const saved = localStorage.getItem(CALIB_STORAGE_KEY);
+        if (saved) {
+          calibratedGps = Object.assign({}, DEFAULT_CALIBRATED_GPS, JSON.parse(saved));
+        } else {
+          calibratedGps = Object.assign({}, DEFAULT_CALIBRATED_GPS);
+        }
+      } catch (e) {
+        console.error('Failed to load GPS calibrations', e);
+        calibratedGps = Object.assign({}, DEFAULT_CALIBRATED_GPS);
+      }
+      updateCalibCounters();
+    }
+
+    function saveCalibrationsToStorage() {
+      try {
+        localStorage.setItem(CALIB_STORAGE_KEY, JSON.stringify(calibratedGps));
+      } catch (e) {
+        console.error('Failed to save calibrations', e);
+      }
+      updateCalibCounters();
+      renderBuildings();
+      renderCalibChecklist();
+    }
+
+    function updateCalibCounters() {
+      const count = Object.keys(calibratedGps).length;
+      const total = CAMPUS_BUILDINGS.length;
+      const countEl = document.getElementById('calibCount');
+      if (countEl) countEl.textContent = count;
+      const topBadge = document.getElementById('calibBadgeTop');
+      if (topBadge) {
+        topBadge.textContent = `${count} / ${total} Calibrated`;
+        topBadge.style.color = count > 0 ? '#10B981' : '#94A3B8';
+      }
+    }
+
+    function onCalibBuildingChange() {
+      const select = document.getElementById('selectCalibBuilding');
+      if (!select) return;
+      const bldgId = select.value;
+      const bldg = CAMPUS_BUILDINGS.find(b => b.id === bldgId);
+      if (!bldg) return;
+
+      document.getElementById('calibBldgTitle').textContent = `[${bldg.number}] ${bldg.name}`;
+      document.getElementById('calibBldgSubtitle').textContent = `${bldg.shortName} • Map Centroid (x: ${bldg.x}, y: ${bldg.y})`;
+
+      const statusBadge = document.getElementById('calibStatusBadge');
+      const latInput = document.getElementById('calibLat');
+      const lngInput = document.getElementById('calibLng');
+      const accDisplay = document.getElementById('calibAccuracyDisplay');
+      const timeDisplay = document.getElementById('calibTimestampDisplay');
+      const statusMsg = document.getElementById('gpsCaptureStatus');
+      statusMsg.style.display = 'none';
+
+      if (calibratedGps[bldgId]) {
+        const d = calibratedGps[bldgId];
+        statusBadge.textContent = '📍 Calibrated';
+        statusBadge.style.background = 'rgba(16,185,129,0.15)';
+        statusBadge.style.color = '#10B981';
+        statusBadge.style.borderColor = 'rgba(16,185,129,0.3)';
+
+        latInput.value = d.latitude;
+        lngInput.value = d.longitude;
+        accDisplay.textContent = `Accuracy: ±${d.accuracy}m`;
+        timeDisplay.textContent = d.timestamp ? `Time: ${new Date(d.timestamp).toLocaleTimeString()}` : 'Time: —';
+      } else {
+        statusBadge.textContent = 'Uncalibrated';
+        statusBadge.style.background = 'rgba(239,68,68,0.15)';
+        statusBadge.style.color = '#F87171';
+        statusBadge.style.borderColor = 'rgba(239,68,68,0.3)';
+
+        latInput.value = '';
+        lngInput.value = '';
+        accDisplay.textContent = 'Accuracy: —';
+        timeDisplay.textContent = 'Time: —';
+      }
+    }
+
+    function selectCalibBuilding(bldgId) {
+      const select = document.getElementById('selectCalibBuilding');
+      if (select) {
+        select.value = bldgId;
+        onCalibBuildingChange();
+      }
+    }
+
+    function renderCalibTab() {
+      onCalibBuildingChange();
+      renderCalibChecklist();
+    }
+
+    function renderCalibChecklist() {
+      const container = document.getElementById('calibBuildingChecklist');
+      if (!container) return;
+      container.innerHTML = '';
+
+      CAMPUS_BUILDINGS.forEach(b => {
+        const isCal = !!calibratedGps[b.id];
+        const item = document.createElement('div');
+        item.style.cssText = `
+          display:flex; justify-content:space-between; align-items:center;
+          padding:6px 10px; background:rgba(255,255,255,0.02);
+          border:1px solid ${isCal ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.05)'};
+          border-radius:6px; cursor:pointer; font-size:12px; transition:all 0.15s;
+        `;
+        item.onmouseover = () => item.style.background = 'rgba(99,102,241,0.08)';
+        item.onmouseout = () => item.style.background = 'rgba(255,255,255,0.02)';
+        item.onclick = () => {
+          selectCalibBuilding(b.id);
+        };
+
+        item.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-weight:700; color:${b.color}; width:24px;">[${b.number}]</span>
+            <span style="color:#E2E8F0;">${b.shortName}</span>
+          </div>
+          <div>
+            ${isCal 
+              ? `<span style="color:#10B981; font-weight:600; font-size:11px;">✓ ${calibratedGps[b.id].latitude.toFixed(5)}, ${calibratedGps[b.id].longitude.toFixed(5)}</span>`
+              : `<span style="color:#64748B; font-size:11px;">Tap to Calibrate</span>`
+            }
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function captureLiveGpsForSelectedBuilding() {
+      const bldgId = document.getElementById('selectCalibBuilding').value;
+      const bldg = CAMPUS_BUILDINGS.find(b => b.id === bldgId);
+      if (!bldg) return;
+
+      const statusEl = document.getElementById('gpsCaptureStatus');
+      const btn = document.getElementById('btnCaptureGps');
+
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser or device.');
+        return;
+      }
+
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = '🛰️ Acquiring high-precision GNSS lock from satellite... please wait outdoors near the building.';
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          const lat = parseFloat(pos.coords.latitude.toFixed(7));
+          const lng = parseFloat(pos.coords.longitude.toFixed(7));
+          const acc = Math.round(pos.coords.accuracy * 10) / 10;
+
+          calibratedGps[bldgId] = {
+            latitude: lat,
+            longitude: lng,
+            accuracy: acc,
+            timestamp: new Date().toISOString(),
+            method: 'live_gps'
+          };
+
+          saveCalibrationsToStorage();
+          onCalibBuildingChange();
+
+          statusEl.innerHTML = `<span style="color:#10B981; font-weight:bold;">✅ Calibrated [${bldg.number}] ${bldg.shortName}!</span> Lat: ${lat}, Lng: ${lng} (Accuracy: ±${acc}m)`;
+        },
+        (err) => {
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          let msg = err.message;
+          if (err.code === 1) msg = 'Location permission denied. Please allow location access in your browser address bar!';
+          else if (err.code === 2) msg = 'Position unavailable. Ensure device GPS is turned on and you have a view of the sky.';
+          else if (err.code === 3) msg = 'GPS request timed out. Please try again.';
+          statusEl.innerHTML = `<span style="color:#EF4444; font-weight:bold;">❌ Error:</span> ${msg}`;
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    function saveManualCalibration() {
+      const bldgId = document.getElementById('selectCalibBuilding').value;
+      const bldg = CAMPUS_BUILDINGS.find(b => b.id === bldgId);
+      if (!bldg) return;
+
+      const latVal = parseFloat(document.getElementById('calibLat').value.trim());
+      const lngVal = parseFloat(document.getElementById('calibLng').value.trim());
+
+      if (isNaN(latVal) || isNaN(lngVal)) {
+        alert('Please enter valid numeric latitude and longitude coordinates.');
+        return;
+      }
+
+      calibratedGps[bldgId] = {
+        latitude: latVal,
+        longitude: lngVal,
+        accuracy: 1.0,
+        timestamp: new Date().toISOString(),
+        method: 'manual'
+      };
+
+      saveCalibrationsToStorage();
+      onCalibBuildingChange();
+      const statusEl = document.getElementById('gpsCaptureStatus');
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = `<span style="color:#10B981; font-weight:bold;">💾 Saved manual coordinates for [${bldg.number}]!</span>`;
+    }
+
+    function clearSelectedCalibration() {
+      const bldgId = document.getElementById('selectCalibBuilding').value;
+      if (calibratedGps[bldgId]) {
+        if (confirm('Remove calibrated GPS coordinates for this building?')) {
+          delete calibratedGps[bldgId];
+          saveCalibrationsToStorage();
+          onCalibBuildingChange();
+        }
+      }
+    }
+
+    // ─── 12. UI TAB & EXPORT HELPERS ──────────────────────────────────────────
+    function switchTab(tabId) {
+      currentActiveTab = tabId;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+      if (tabId === 'routes') {
+        document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+        document.getElementById('tab-routes').style.display = 'flex';
+      } else if (tabId === 'test') {
+        document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+        document.getElementById('tab-test').style.display = 'flex';
+      } else if (tabId === 'tools') {
+        document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
+        document.getElementById('tab-tools').style.display = 'flex';
+      } else if (tabId === 'calibrate') {
+        document.querySelector('.tab-btn:nth-child(4)').classList.add('active');
+        document.getElementById('tab-calibrate').style.display = 'flex';
+        renderCalibTab();
+      } else if (tabId === 'autowalk') {
+        document.querySelector('.tab-btn:nth-child(5)').classList.add('active');
+        document.getElementById('tab-autowalk').style.display = 'flex';
+        populateAutoWalkDropdowns();
+      }
+    }
+
+    function populateDropdowns() {
+      const s1 = document.getElementById('selectStart');
+      const s2 = document.getElementById('selectEnd');
+      const sCal = document.getElementById('selectCalibBuilding');
+      s1.innerHTML = '';
+      s2.innerHTML = '';
+      if (sCal) sCal.innerHTML = '';
+
+      getAllBuildings().forEach(b => {
+        const opt1 = document.createElement('option');
+        opt1.value = b.id;
+        opt1.textContent = b.isCustomPoi ? `${b.icon || '🏪'} ${b.name}` : `[${b.number}] ${b.name}`;
+        
+        const opt2 = document.createElement('option');
+        opt2.value = b.id;
+        opt2.textContent = b.isCustomPoi ? `${b.icon || '🏪'} ${b.name}` : `[${b.number}] ${b.name}`;
+        
+        s1.appendChild(opt1);
+        s2.appendChild(opt2);
+
+        if (sCal) {
+          const optCal = document.createElement('option');
+          optCal.value = b.id;
+          optCal.textContent = b.isCustomPoi ? `${b.icon || '🏪'} ${b.name}` : `[${b.number}] ${b.name} (${b.shortName})`;
+          sCal.appendChild(optCal);
+        }
+      });
+
+      s1.value = 'block_10'; // M-Wing
+      s2.value = 'block_16'; // Library
+      if (sCal) sCal.value = 'block_1'; // Admin
+    }
+
+    function onBuildingClick(b) {
+      if (currentActiveTab === 'calibrate') {
+        selectCalibBuilding(b.id);
+        return;
+      }
+      document.getElementById('selectEnd').value = b.id;
+      switchTab('test');
+      runPathfindingTest();
+    }
+
+    function toggleLayer(layer) {
+      layersVisible[layer] = !layersVisible[layer];
+      const btnMap = { roads: 'btnToggleRoads', connectors: 'btnToggleConnectors', labels: 'btnToggleLabels' };
+      document.getElementById(btnMap[layer]).classList.toggle('active', layersVisible[layer]);
+
+      if (layer === 'labels') {
+        document.querySelectorAll('.bldg-subtext').forEach(el => {
+          el.style.display = layersVisible.labels ? 'block' : 'none';
+        });
+      } else {
+        renderRoutes();
+      }
+    }
+
+    // Export Modal (supports both routes and GPS)
+    function openExportModal() {
+      currentExportMode = 'routes';
+      document.getElementById('exportModalTitle').textContent = 'Export Curated Route Network';
+      document.getElementById('exportModalDesc').textContent = 'Copy this curated route dataset to paste directly into our chat or MapGraph.ts!';
+      switchExportFormat(activeExportFormat);
+      document.getElementById('exportModal').style.display = 'flex';
+    }
+
+    function openGpsExportModal(fmt) {
+      currentExportMode = 'gps';
+      activeExportFormat = fmt;
+      document.getElementById('exportModalTitle').textContent = 'Export Calibrated GPS Ground Truth';
+      document.getElementById('exportModalDesc').textContent = 'Exported real latitude & longitude coordinates for campus buildings, ready to be hardcoded into CampusBuildings.ts for max accuracy!';
+      switchExportFormat(fmt);
+      document.getElementById('exportModal').style.display = 'flex';
+    }
+
+    function closeExportModal() {
+      document.getElementById('exportModal').style.display = 'none';
+    }
+
+    // Import Modal functions
+    function openGpsImportModal() {
+      document.getElementById('importText').value = '';
+      document.getElementById('importStatus').textContent = '';
+      document.getElementById('importModal').style.display = 'flex';
+    }
+
+    function closeImportModal() {
+      document.getElementById('importModal').style.display = 'none';
+    }
+
+    function processImportJson() {
+      const text = document.getElementById('importText').value.trim();
+      const statusEl = document.getElementById('importStatus');
+      
+      if (!text) {
+        statusEl.textContent = '❌ Please paste JSON data first.';
+        statusEl.style.color = '#EF4444';
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(text);
+        if (!parsed.buildings || !Array.isArray(parsed.buildings)) {
+          throw new Error("Invalid format. Missing 'buildings' array.");
+        }
+
+        let importedCount = 0;
+        parsed.buildings.forEach(b => {
+          if (b.latitude != null && b.longitude != null && b.id) {
+            calibratedGps[b.id] = {
+              latitude: b.latitude,
+              longitude: b.longitude,
+              accuracy: b.accuracyMeters || 1.0,
+              timestamp: b.calibratedAt || new Date().toISOString(),
+              method: 'imported'
+            };
+            importedCount++;
+
+            // If it's a custom landmark (Xerox, Stationery) dropped on phone, restore it on laptop!
+            if (b.id.startsWith('poi_') && !customLandmarks.find(p => p.id === b.id)) {
+              const restoredPoi = {
+                id: b.id,
+                number: b.number || '🏪',
+                name: b.name,
+                shortName: b.shortName || b.name,
+                icon: b.number || '🏪',
+                color: '#8B5CF6',
+                x: b.x,
+                y: b.y,
+                lat: b.latitude,
+                lng: b.longitude,
+                accuracy: b.accuracyMeters,
+                isCustomPoi: true,
+                shapeType: 'circle',
+                circle: { cx: b.x, cy: b.y, r: 12 }
+              };
+              customLandmarks.push(restoredPoi);
+              autoConnectPoiToNearestRoute(restoredPoi);
+            }
+          }
+        });
+
+        if (importedCount === 0) {
+          throw new Error("No valid GPS coordinates found in the JSON.");
+        }
+
+        saveCalibrationsToStorage();
+        saveCustomLandmarks();
+        renderBuildings();
+        renderCustomPoiList();
+        populateDropdowns();
+        onCalibBuildingChange();
+        
+        statusEl.textContent = `✅ Successfully imported ${importedCount} coordinates!`;
+        statusEl.style.color = '#10B981';
+        
+        setTimeout(() => {
+          closeImportModal();
+        }, 2000);
+
+      } catch (err) {
+        statusEl.textContent = `❌ Import Failed: ${err.message}`;
+        statusEl.style.color = '#EF4444';
+      }
+    }
+
+    function switchExportFormat(fmt) {
+      activeExportFormat = fmt;
+      document.getElementById('btnExportJson').classList.toggle('active', fmt === 'json');
+      document.getElementById('btnExportTs').classList.toggle('active', fmt === 'ts');
+
+      const ta = document.getElementById('exportText');
+      const allBldgs = getAllBuildings();
+
+      if (currentExportMode === 'gps') {
+        if (fmt === 'json') {
+          const exportData = {
+            exportedAt: new Date().toISOString(),
+            totalBuildings: allBldgs.length,
+            calibratedCount: Object.keys(calibratedGps).length,
+            buildings: allBldgs.map(b => ({
+              id: b.id,
+              number: b.number,
+              name: b.name,
+              shortName: b.shortName,
+              x: b.x,
+              y: b.y,
+              latitude: calibratedGps[b.id] ? calibratedGps[b.id].latitude : (b.lat || null),
+              longitude: calibratedGps[b.id] ? calibratedGps[b.id].longitude : (b.lng || null),
+              accuracyMeters: calibratedGps[b.id] ? calibratedGps[b.id].accuracy : (b.accuracy || null),
+              calibratedAt: calibratedGps[b.id] ? calibratedGps[b.id].timestamp : null
+            }))
+          };
+          ta.value = JSON.stringify(exportData, null, 2);
+        } else {
+          // TypeScript format snippet for CampusBuildings.ts
+          let ts = `// Calibrated GPS coordinates for CampusBuildings.ts\nexport const CAMPUS_BUILDING_GPS: Record<string, { lat: number; lng: number; accuracy: number }> = {\n`;
+          allBldgs.forEach(b => {
+            const d = calibratedGps[b.id] || (b.lat ? { latitude: b.lat, longitude: b.lng, accuracy: b.accuracy || 1.0 } : null);
+            if (d) {
+              ts += `  '${b.number}': { lat: ${d.latitude}, lng: ${d.longitude}, accuracy: ${d.accuracy} }, // ${b.name}\n`;
+            }
+          });
+          ts += `};\n`;
+          ta.value = ts;
+        }
+      } else {
+        // Route export mode
+        if (fmt === 'json') {
+          ta.value = JSON.stringify({
+            exportedAt: new Date().toISOString(),
+            routes: currentRoutes
+          }, null, 2);
+        } else {
+          let ts = `export const CURATED_CAMPUS_PATHS = [\n`;
+          currentRoutes.forEach(r => {
+            ts += `  {\n    id: '${r.id}',\n    name: '${r.name}',\n    category: '${r.category}',\n    nodes: [\n`;
+            r.nodes.forEach(n => {
+              ts += `      { id: '${n.id}', x: ${n.x}, y: ${n.y} },\n`;
+            });
+            ts += `    ]\n  },\n`;
+          });
+          ts += `];\n`;
+          ta.value = ts;
+        }
+      }
+    }
+
+    // ─── 13. AUTO-WALK MAPPING ────────────────────────────────────────────────
+    let affineTransform = null;
+    let watchPositionId = null;
+    let autoWalkNodes = [];
+    let isAutoWalking = false;
+
+    function populateAutoWalkDropdowns() {
+      const sA = document.getElementById('awAnchorA');
+      const sB = document.getElementById('awAnchorB');
+      const sC = document.getElementById('awAnchorC');
+      if (!sA || sA.options.length > 0) return;
+
+      CAMPUS_BUILDINGS.forEach(b => {
+        const optA = document.createElement('option'); optA.value = b.id; optA.textContent = `[${b.number}] ${b.name}`;
+        const optB = document.createElement('option'); optB.value = b.id; optB.textContent = `[${b.number}] ${b.name}`;
+        const optC = document.createElement('option'); optC.value = b.id; optC.textContent = `[${b.number}] ${b.name}`;
+        sA.appendChild(optA);
+        sB.appendChild(optB);
+        sC.appendChild(optC);
+      });
+      if (CAMPUS_BUILDINGS.length >= 3) {
+        sA.value = CAMPUS_BUILDINGS[0].id;
+        sB.value = CAMPUS_BUILDINGS[CAMPUS_BUILDINGS.length - 1].id;
+        sC.value = CAMPUS_BUILDINGS[11].id;
+      }
+    }
+
+    function computeAffineMatrix() {
+      const idA = document.getElementById('awAnchorA').value;
+      const idB = document.getElementById('awAnchorB').value;
+      const idC = document.getElementById('awAnchorC').value;
+      
+      const statusEl = document.getElementById('awMatrixStatus');
+      statusEl.style.display = 'block';
+
+      if (idA === idB || idB === idC || idA === idC) {
+        statusEl.innerHTML = `<span style="color:#EF4444;">❌ Error: Please select 3 distinct buildings.</span>`;
+        return;
+      }
+
+      const bA = CAMPUS_BUILDINGS.find(b => b.id === idA);
+      const bB = CAMPUS_BUILDINGS.find(b => b.id === idB);
+      const bC = CAMPUS_BUILDINGS.find(b => b.id === idC);
+
+      const gpsA = calibratedGps[idA];
+      const gpsB = calibratedGps[idB];
+      const gpsC = calibratedGps[idC];
+
+      if (!gpsA || !gpsB || !gpsC) {
+        statusEl.innerHTML = `<span style="color:#EF4444;">❌ Error: All 3 selected buildings must be GPS Calibrated first. Head to the 📍 GPS tab.</span>`;
+        return;
+      }
+
+      const p1 = { x: bA.x, y: bA.y, lat: gpsA.latitude, lng: gpsA.longitude };
+      const p2 = { x: bB.x, y: bB.y, lat: gpsB.latitude, lng: gpsB.longitude };
+      const p3 = { x: bC.x, y: bC.y, lat: gpsC.latitude, lng: gpsC.longitude };
+
+      const det = p1.lng * (p2.lat - p3.lat) - p2.lng * (p1.lat - p3.lat) + p3.lng * (p1.lat - p2.lat);
+      if (Math.abs(det) < 1e-9) {
+        statusEl.innerHTML = `<span style="color:#EF4444;">❌ Error: Points are collinear or too close. Choose buildings spread in a triangle.</span>`;
+        return;
+      }
+
+      const a = (p1.x * (p2.lat - p3.lat) - p2.x * (p1.lat - p3.lat) + p3.x * (p1.lat - p2.lat)) / det;
+      const b = (p1.lng * (p2.x - p3.x) - p2.lng * (p1.x - p3.x) + p3.lng * (p1.x - p2.x)) / det;
+      const c = p1.x - a * p1.lng - b * p1.lat;
+
+      const d = (p1.y * (p2.lat - p3.lat) - p2.y * (p1.lat - p3.lat) + p3.y * (p1.lat - p2.lat)) / det;
+      const e = (p1.lng * (p2.y - p3.y) - p2.lng * (p1.y - p3.y) + p3.lng * (p1.y - p2.y)) / det;
+      const f = p1.y - d * p1.lng - e * p1.lat;
+
+      affineTransform = { a, b, c, d, e, f };
+      
+      statusEl.innerHTML = `<span style="color:#10B981; font-weight:bold;">✅ Matrix Computed Successfully!</span><br>GPS to SVG translation is armed and ready.`;
+      
+      document.getElementById('btnToggleWalk').disabled = false;
+      document.getElementById('awWalkStatus').textContent = 'Ready to start tracking your walk.';
+    }
+
+    function toggleAutoWalk() {
+      const btn = document.getElementById('btnToggleWalk');
+      const statusEl = document.getElementById('awWalkStatus');
+      const btnSave = document.getElementById('btnSaveWalk');
+
+      if (!isAutoWalking) {
+        if (!navigator.geolocation) {
+          alert('Geolocation is not supported by your browser.');
+          return;
+        }
+        
+        isAutoWalking = true;
+        autoWalkNodes = [];
+        btn.textContent = '⏹️ Stop Walking';
+        btn.style.background = '#EF4444';
+        statusEl.innerHTML = '<span style="color:#38BDF8;">Tracking... Walk around! Recording nodes automatically.</span>';
+        btnSave.disabled = true;
+
+        watchPositionId = navigator.geolocation.watchPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            
+            const x = affineTransform.a * lng + affineTransform.b * lat + affineTransform.c;
+            const y = affineTransform.d * lng + affineTransform.e * lat + affineTransform.f;
+
+            let addNode = true;
+            if (autoWalkNodes.length > 0) {
+              const last = autoWalkNodes[autoWalkNodes.length - 1];
+              const dist = Math.hypot(x - last.x, y - last.y);
+              if (dist < 8) addNode = false;
+            }
+
+            if (addNode) {
+              autoWalkNodes.push({ id: `aw_${Date.now()}`, x: Math.round(x), y: Math.round(y) });
+              renderAutoWalkPreview();
+              statusEl.innerHTML = `<span style="color:#10B981;">Tracking... Recorded ${autoWalkNodes.length} nodes.</span>`;
+            }
+          },
+          (err) => {
+            console.error(err);
+            statusEl.innerHTML = `<span style="color:#EF4444;">GPS Error: ${err.message}</span>`;
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+        
+      } else {
+        isAutoWalking = false;
+        if (watchPositionId !== null) {
+          navigator.geolocation.clearWatch(watchPositionId);
+          watchPositionId = null;
+        }
+        btn.textContent = '▶️ Start Walking';
+        btn.style.background = '#10B981';
+        btnSave.disabled = (autoWalkNodes.length < 2);
+        
+        statusEl.innerHTML = `<span style="color:#A3E635;">Tracking stopped. Captured ${autoWalkNodes.length} nodes. You can now save the route.</span>`;
+      }
+    }
+
+    function renderAutoWalkPreview() {
+      const g = document.getElementById('drawingLayer');
+      g.innerHTML = '';
+      if (autoWalkNodes.length === 0) return;
+
+      const pts = autoWalkNodes.map(n => `${n.x},${n.y}`).join(' ');
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      line.setAttribute('points', pts);
+      line.setAttribute('fill', 'none');
+      line.setAttribute('stroke', '#38BDF8');
+      line.setAttribute('stroke-width', '4');
+      line.setAttribute('stroke-dasharray', '8,4');
+      g.appendChild(line);
+
+      autoWalkNodes.forEach(n => {
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('cx', n.x);
+        c.setAttribute('cy', n.y);
+        c.setAttribute('r', '4');
+        c.setAttribute('fill', '#FFFFFF');
+        c.setAttribute('stroke', '#38BDF8');
+        c.setAttribute('stroke-width', '2');
+        g.appendChild(c);
+      });
+    }
+
+    function saveAutoWalkRoute() {
+      if (autoWalkNodes.length < 2) return;
+      const name = document.getElementById('awRouteName').value.trim() || `Auto-Walk ${currentRoutes.length + 1}`;
+      
+      currentRoutes.push({
+        id: `autowalk_${Date.now()}`,
+        name: name,
+        category: 'walkway',
+        color: '#38BDF8',
+        enabled: true,
+        nodes: [...autoWalkNodes]
+      });
+
+      autoWalkNodes = [];
+      document.getElementById('drawingLayer').innerHTML = '';
+      document.getElementById('btnSaveWalk').disabled = true;
+      document.getElementById('awWalkStatus').textContent = 'Saved! Ready for another recording.';
+      document.getElementById('awRouteName').value = '';
+
+      renderRoutes();
+      updateRouteList();
+      switchTab('routes');
+    }
+
+    // ─── 14. CUSTOM LANDMARKS & AMENITIES (XEROX, STATIONERY, SHOPS) ─────────
+    const POI_STORAGE_KEY = 'CAMPUS_STUDIO_CUSTOM_POIS';
+    let customLandmarks = [];
+    let isPoiClickMode = false;
+
+    function getAllBuildings() {
+      return [...CAMPUS_BUILDINGS, ...customLandmarks];
+    }
+
+    function loadCustomLandmarks() {
+      try {
+        const saved = localStorage.getItem(POI_STORAGE_KEY);
+        if (saved) {
+          customLandmarks = JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error('Failed to load custom POIs', e);
+      }
+    }
+
+    function saveCustomLandmarks() {
+      try {
+        localStorage.setItem(POI_STORAGE_KEY, JSON.stringify(customLandmarks));
+      } catch (e) {
+        console.error('Failed to save custom POIs', e);
+      }
+    }
+
+    function togglePoiClickMode() {
+      const nameInput = document.getElementById('poiName');
+      const name = nameInput.value.trim() || 'Xerox / Stationery';
+      isPoiClickMode = !isPoiClickMode;
+
+      const btn = document.getElementById('btnPoiClick');
+      const statusEl = document.getElementById('poiStatus');
+      const statusBottom = document.getElementById('statusText');
+
+      if (isPoiClickMode) {
+        isDrawingMode = false;
+        isRulerMode = false;
+        btn.textContent = '❌ Cancel Placement';
+        btn.style.background = '#EF4444';
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = `🎯 <b>Click Placement Active:</b> Click anywhere on the map to place <b>"${name}"</b>.`;
+        statusBottom.textContent = `🎯 Click anywhere on the map to place "${name}"`;
+      } else {
+        btn.textContent = '🎯 1-Click: Tap on Map to Place';
+        btn.style.background = '#6366F1';
+        statusEl.style.display = 'none';
+        statusBottom.textContent = 'Ready • Drag waypoints to reposition • Scroll to zoom';
+      }
+    }
+
+    function handlePoiClickPlacement(svgPt) {
+      const nameInput = document.getElementById('poiName');
+      const name = nameInput.value.trim() || 'Xerox / Stationery';
+      const icon = document.getElementById('poiCategory').value;
+      const color = document.getElementById('poiColor').value;
+      const statusEl = document.getElementById('poiStatus');
+
+      const x = Math.round(svgPt.x);
+      const y = Math.round(svgPt.y);
+
+      addCustomLandmark({
+        name,
+        icon,
+        color,
+        x,
+        y,
+        lat: null,
+        lng: null,
+        accuracy: null
+      });
+
+      togglePoiClickMode();
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = `<span style="color:#10B981; font-weight:bold;">✅ Placed "${name}" at (${x}, ${y})!</span> Auto-connected to nearest path!`;
+      nameInput.value = '';
+    }
+
+    function dropPoiByLiveGps() {
+      const nameInput = document.getElementById('poiName');
+      const name = nameInput.value.trim() || 'Xerox / Stationery';
+      const icon = document.getElementById('poiCategory').value;
+      const color = document.getElementById('poiColor').value;
+      const statusEl = document.getElementById('poiStatus');
+      statusEl.style.display = 'block';
+
+      let transform = affineTransform;
+      if (!transform) {
+        const calKeys = Object.keys(calibratedGps).filter(k => calibratedGps[k] && calibratedGps[k].latitude);
+        if (calKeys.length >= 3) {
+          const bA = CAMPUS_BUILDINGS.find(b => b.id === calKeys[0]);
+          const bB = CAMPUS_BUILDINGS.find(b => b.id === calKeys[1]);
+          const bC = CAMPUS_BUILDINGS.find(b => b.id === calKeys[2]);
+          const gpsA = calibratedGps[calKeys[0]];
+          const gpsB = calibratedGps[calKeys[1]];
+          const gpsC = calibratedGps[calKeys[2]];
+          
+          const p1 = { x: bA.x, y: bA.y, lat: gpsA.latitude, lng: gpsA.longitude };
+          const p2 = { x: bB.x, y: bB.y, lat: gpsB.latitude, lng: gpsB.longitude };
+          const p3 = { x: bC.x, y: bC.y, lat: gpsC.latitude, lng: gpsC.longitude };
+
+          const det = p1.lng * (p2.lat - p3.lat) - p2.lng * (p1.lat - p3.lat) + p3.lng * (p1.lat - p2.lat);
+          if (Math.abs(det) >= 1e-9) {
+            const a = (p1.x * (p2.lat - p3.lat) - p2.x * (p1.lat - p3.lat) + p3.x * (p1.lat - p2.lat)) / det;
+            const b = (p1.lng * (p2.x - p3.x) - p2.lng * (p1.x - p3.x) + p3.lng * (p1.x - p2.x)) / det;
+            const c = p1.x - a * p1.lng - b * p1.lat;
+            const d = (p1.y * (p2.lat - p3.lat) - p2.y * (p1.lat - p3.lat) + p3.y * (p1.lat - p2.lat)) / det;
+            const e = (p1.lng * (p2.y - p3.y) - p2.lng * (p1.y - p3.y) + p3.lng * (p1.y - p2.y)) / det;
+            const f = p1.y - d * p1.lng - e * p1.lat;
+            transform = { a, b, c, d, e, f };
+            affineTransform = transform;
+          }
+        }
+      }
+
+      if (!transform) {
+        statusEl.innerHTML = `<span style="color:#EF4444;">⚠️ Notice:</span> Please calibrate at least 3 buildings in the 📍 GPS tab first, so we know how to map GPS to map pixels!`;
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your device.');
+        return;
+      }
+
+      statusEl.innerHTML = '🛰️ Acquiring live satellite GPS fix... hold still near the shop.';
+      const btn = document.getElementById('btnPoiGps');
+      btn.disabled = true;
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          btn.disabled = false;
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const acc = Math.round(pos.coords.accuracy * 10) / 10;
+
+          const x = Math.round(transform.a * lng + transform.b * lat + transform.c);
+          const y = Math.round(transform.d * lng + transform.e * lat + transform.f);
+
+          addCustomLandmark({
+            name,
+            icon,
+            color,
+            x,
+            y,
+            lat,
+            lng,
+            accuracy: acc
+          });
+
+          statusEl.innerHTML = `<span style="color:#10B981; font-weight:bold;">✅ Dropped "${name}" at (${x}, ${y})!</span> (GPS: ±${acc}m). Auto-connected to path!`;
+          nameInput.value = '';
+        },
+        (err) => {
+          btn.disabled = false;
+          statusEl.innerHTML = `<span style="color:#EF4444;">❌ GPS Error:</span> ${err.message}`;
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    }
+
+    function addCustomLandmark(data) {
+      const poiId = `poi_${Date.now()}`;
+      const newPoi = {
+        id: poiId,
+        number: data.icon,
+        name: data.name,
+        shortName: data.name.length > 10 ? data.name.substring(0, 8) + '..' : data.name,
+        icon: data.icon,
+        color: data.color,
+        x: data.x,
+        y: data.y,
+        lat: data.lat,
+        lng: data.lng,
+        accuracy: data.accuracy,
+        isCustomPoi: true,
+        shapeType: 'circle',
+        circle: { cx: data.x, cy: data.y, r: 12 }
+      };
+
+      customLandmarks.push(newPoi);
+      saveCustomLandmarks();
+
+      autoConnectPoiToNearestRoute(newPoi);
+
+      renderBuildings();
+      populateDropdowns();
+      renderCustomPoiList();
+    }
+
+    function autoConnectPoiToNearestRoute(poi) {
+      let closestNode = null;
+      let minDist = Infinity;
+
+      currentRoutes.forEach(r => {
+        if (!r.enabled) return;
+        r.nodes.forEach(n => {
+          if (n.id.startsWith('door_poi_')) return;
+          const d = Math.hypot(n.x - poi.x, n.y - poi.y);
+          if (d < minDist) {
+            minDist = d;
+            closestNode = n;
+          }
+        });
+      });
+
+      if (closestNode) {
+        const connectorRoute = {
+          id: `connector_${poi.id}`,
+          name: `Connector to ${poi.name}`,
+          category: 'connector',
+          color: poi.color || '#F43F5E',
+          enabled: true,
+          nodes: [
+            { id: `door_${poi.id}`, x: poi.x, y: poi.y },
+            { id: closestNode.id, x: closestNode.x, y: closestNode.y }
+          ]
+        };
+        currentRoutes.push(connectorRoute);
+        renderRoutes();
+        updateRouteList();
+      }
+    }
+
+    function deleteCustomPoi(poiId) {
+      const poi = customLandmarks.find(p => p.id === poiId);
+      if (!poi) return;
+      if (confirm(`Remove landmark "${poi.name}" from the map?`)) {
+        customLandmarks = customLandmarks.filter(p => p.id !== poiId);
+        currentRoutes = currentRoutes.filter(r => r.id !== `connector_${poiId}`);
+        saveCustomLandmarks();
+        renderBuildings();
+        renderRoutes();
+        updateRouteList();
+        populateDropdowns();
+        renderCustomPoiList();
+        clearShortestPath();
+      }
+    }
+
+    function renderCustomPoiList() {
+      const card = document.getElementById('customLandmarksCard');
+      const countEl = document.getElementById('customPoiCount');
+      const list = document.getElementById('customPoiList');
+      if (!card || !list) return;
+
+      if (customLandmarks.length === 0) {
+        card.style.display = 'none';
+        return;
+      }
+
+      card.style.display = 'block';
+      countEl.textContent = customLandmarks.length;
+      list.innerHTML = '';
+
+      customLandmarks.forEach(poi => {
+        const item = document.createElement('div');
+        item.style.cssText = `
+          display:flex; justify-content:space-between; align-items:center;
+          padding:6px 10px; background:rgba(255,255,255,0.03);
+          border:1px solid rgba(255,255,255,0.08); border-radius:6px; font-size:12px;
+        `;
+        item.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:14px;">${poi.icon || '🏪'}</span>
+            <div>
+              <div style="font-weight:600; color:#FFF;">${poi.name}</div>
+              <div style="font-size:10px; color:#94A3B8;">Pos: (${poi.x}, ${poi.y}) ${poi.lat ? `• GPS: ${poi.lat.toFixed(5)}, ${poi.lng.toFixed(5)}` : ''}</div>
+            </div>
+          </div>
+          <button class="btn-icon" title="Remove landmark" onclick="deleteCustomPoi('${poi.id}')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function copyExportCode() {
+      const ta = document.getElementById('exportText');
+      ta.select();
+      navigator.clipboard.writeText(ta.value).then(() => {
+        alert('Copied to clipboard! You can paste this right into our chat.');
+      });
+    }
+  </script>
+</body>
+</html>
