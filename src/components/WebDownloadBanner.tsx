@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Linking, Platform } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import { palette, accent } from '../theme/colors';
 
-export const APK_DOWNLOAD_URL = 'https://expo.dev/artifacts/eas/AG27TWjpYW4S5nDgj3rdnxvSPS_0tAwvh6RN1vT_pqg.apk';
+export const APK_DOWNLOAD_URL = 'https://github.com/jatinhemnani26/attendancetracker/releases/latest/download/AttendanceTracker.apk';
 
 export default function WebDownloadBanner() {
   const [dismissed, setDismissed] = useState(false);

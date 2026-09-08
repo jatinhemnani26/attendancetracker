@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 <p align="center">
-  <a href="https://expo.dev/artifacts/eas/AG27TWjpYW4S5nDgj3rdnxvSPS_0tAwvh6RN1vT_pqg.apk">
+  <a href="https://github.com/jatinhemnani26/attendancetracker/releases/latest/download/AttendanceTracker.apk">
     <img src="docs/download_button.svg" width="340" alt="Download Attendance Tracker Android APK" />
   </a>
 </p>

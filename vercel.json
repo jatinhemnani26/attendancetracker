@@ -2,6 +2,18 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "expo export -p web",
   "outputDirectory": "dist",
+  "redirects": [
+    {
+      "source": "/AttendanceTracker.apk",
+      "destination": "https://github.com/jatinhemnani26/attendancetracker/releases/latest/download/AttendanceTracker.apk",
+      "permanent": false
+    },
+    {
+      "source": "/download-apk",
+      "destination": "https://github.com/jatinhemnani26/attendancetracker/releases/latest/download/AttendanceTracker.apk",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
