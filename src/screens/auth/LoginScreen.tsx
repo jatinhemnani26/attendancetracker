@@ -146,7 +146,38 @@ export default function LoginScreen({
 
   return (
     <View style={styles.screen}>
-      {/* ─── Premium Ambient Background ─── */}
+      {/* ─── Top Floating Header for Web ─── */}
+      {Platform.OS === 'web' && (
+        <View style={styles.webTopBar}>
+          <View style={styles.webBrandRow}>
+            <View style={styles.webBrandDot} />
+            <Text style={styles.webBrandTitle}>Attendance Tracker</Text>
+          </View>
+          <View style={styles.webTopActions}>
+            <TouchableOpacity
+              style={styles.webPillBtn}
+              onPress={() => Linking.openURL(APK_DOWNLOAD_URL)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="logo-android" size={13} color="#10B981" />
+              <Text style={styles.webPillText}>Download APK</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.webPillBtn, isCustomDb && styles.webPillBtnActive]}
+              onPress={() => setShowByodbModal(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="server-outline" size={12} color={isCustomDb ? "#10B981" : "#94A3B8"} />
+              <Text style={styles.webPillText}>
+                {isCustomDb ? "Custom DB Active" : "Custom DB"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* ─── Subtle Ambient Background ─── */}
       <View style={StyleSheet.absoluteFill}>
         <LinearGradient colors={[canvas.base, canvas.elevated]} style={StyleSheet.absoluteFill} />
         <Animated.View style={[styles.glowOrb, styles.orb1, { transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [-50, 0] }) }] }]} />
@@ -167,21 +198,14 @@ export default function LoginScreen({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* ─── Animated Header ─── */}
+          {/* ─── Header ─── */}
           <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY }] }]}>
             <View style={styles.logoContainer}>
-              <LinearGradient
-                colors={[accent.primary, accent.secondary]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.logoGradient}
-              >
-                <Ionicons name="finger-print" size={32} color={text.primary} />
-              </LinearGradient>
+              <Ionicons name="school-outline" size={24} color={accent.primary} />
             </View>
-            <Text style={styles.title}>Attendance</Text>
+            <Text style={styles.title}>Attendance Tracker</Text>
             <Text style={styles.subtitle}>
-              Log in to manage your academic journey
+              Sign in to manage your schedule and attendance
             </Text>
           </Animated.View>
 
@@ -289,39 +313,6 @@ export default function LoginScreen({
               <Text style={styles.registerLink}>Create one</Text>
             </TouchableOpacity>
           </View>
-
-          {/* ─── Web APK Download & BYODB ─── */}
-          {Platform.OS === 'web' && (
-            <View style={styles.webDownloadSection}>
-              <View style={styles.webDivider}>
-                <View style={styles.webDividerLine} />
-                <Text style={styles.webDividerText}>EXPLORE & SELF-HOST</Text>
-                <View style={styles.webDividerLine} />
-              </View>
-
-              <TouchableOpacity
-                style={styles.webApkButton}
-                onPress={() => Linking.openURL(APK_DOWNLOAD_URL)}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="logo-android" size={18} color="#10B981" />
-                <Text style={styles.webApkButtonText}>Download Android App (.APK)</Text>
-                <Ionicons name="download-outline" size={15} color="#94A3B8" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.webApkButton, { marginTop: 10 }]}
-                onPress={() => setShowByodbModal(true)}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="server-outline" size={18} color={accent.primary} />
-                <Text style={styles.webApkButtonText}>
-                  {isCustomDb ? 'Connected: Custom Supabase' : 'Connect Custom Supabase (BYODB)'}
-                </Text>
-                <Ionicons name="settings-outline" size={15} color="#94A3B8" />
-              </TouchableOpacity>
-            </View>
-          )}
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -355,51 +346,105 @@ const styles = StyleSheet.create({
   // ── Ambient Background
   glowOrb: {
     position: 'absolute',
-    width: Dimensions.get('window').width * 0.8,
-    height: Dimensions.get('window').width * 0.8,
+    width: Dimensions.get('window').width * 0.4,
+    height: Dimensions.get('window').width * 0.4,
     borderRadius: Dimensions.get('window').width,
-    opacity: 0.15,
+    opacity: 0.04,
   },
   orb1: {
-    top: -100,
-    left: -100,
+    top: -80,
+    left: -80,
     backgroundColor: accent.primary,
   },
   orb2: {
-    bottom: -100,
-    right: -100,
+    bottom: -80,
+    right: -80,
     backgroundColor: accent.secondary,
+  },
+
+  // ── Top Navigation Bar (Web)
+  webTopBar: {
+    position: 'absolute',
+    top: 20,
+    left: 24,
+    right: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  webBrandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  webBrandDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: accent.primary,
+  },
+  webBrandTitle: {
+    color: '#F8FAFC',
+    fontSize: 13,
+    fontWeight: '700',
+    fontFamily: fontFamily.bold,
+    letterSpacing: 0.5,
+  },
+  webTopActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  webPillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  webPillBtnActive: {
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+  },
+  webPillText: {
+    color: '#F1F5F9',
+    fontSize: 12,
+    fontFamily: fontFamily.medium,
   },
 
   // ── Header
   header: {
     alignItems: 'center',
-    marginBottom: spacing['4xl'],
+    marginBottom: spacing.xl,
   },
   logoContainer: {
-    marginBottom: spacing.xl,
-    padding: 2,
-    borderRadius: radius['2xl'],
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    marginBottom: spacing.md,
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    ...shadow.strong,
-  },
-  logoGradient: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.xl,
+    borderColor: 'rgba(99, 102, 241, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   title: {
-    ...textStyle.pageTitle,
-    marginBottom: spacing.sm,
+    fontFamily: fontFamily.bold,
+    fontSize: 24,
+    color: '#F8FAFC',
+    marginBottom: 4,
     textAlign: 'center',
+    letterSpacing: -0.4,
   },
   subtitle: {
-    ...textStyle.body,
+    fontFamily: fontFamily.medium,
+    fontSize: 13,
+    color: '#94A3B8',
     textAlign: 'center',
   },
 
@@ -411,7 +456,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   errorText: {
     fontFamily: fontFamily.medium,
@@ -420,27 +465,33 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // ── Glass Card Form
+  // ── Card Form
   formCard: {
-    backgroundColor: glass.medium,
+    backgroundColor: '#0F172A',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    borderRadius: radius['2xl'],
-    padding: spacing['2xl'],
-    paddingTop: spacing['3xl'],
-    gap: spacing.xl,
-    ...shadow.strong,
-    maxWidth: 480,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    padding: spacing.xl,
+    gap: spacing.lg,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 8,
+    maxWidth: 400,
     width: '100%',
     alignSelf: 'center',
   },
 
   // ── Form Fields
   fieldGroup: {
-    gap: spacing.sm,
+    gap: 6,
   },
   fieldLabel: {
-    ...textStyle.label,
+    fontFamily: fontFamily.semiBold,
+    fontSize: 11,
+    letterSpacing: 0.8,
+    color: '#94A3B8',
   },
   fieldLabelRow: {
     flexDirection: 'row',
@@ -448,47 +499,53 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   inputContainer: {
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(2, 6, 23, 0.5)',
     borderWidth: 1,
-    borderColor: border.default,
-    borderRadius: radius.lg,
+    borderColor: 'rgba(255, 255, 255, 0.09)',
+    borderRadius: 10,
     overflow: 'hidden',
   },
   inputFocused: {
-    borderColor: accent.primary + '60',
+    borderColor: accent.primary,
   },
   input: {
     fontFamily: fontFamily.medium,
-    fontSize: fontSize.base,
-    color: text.primary,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.lg,
+    fontSize: 14,
+    color: '#F8FAFC',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
   },
   forgotLink: {
     fontFamily: fontFamily.medium,
-    fontSize: fontSize.xs,
-    color: accent.secondary,
+    fontSize: 12,
+    color: accent.primary,
   },
 
   // ── Button
   buttonWrapper: {
-    marginTop: spacing.sm,
+    marginTop: 4,
     width: '100%',
   },
   signInButton: {
     width: '100%',
-    paddingVertical: spacing.lg,
+    paddingVertical: 13,
     paddingHorizontal: spacing.xl,
-    borderRadius: radius.lg,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    ...shadow.glow(accent.primary),
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: accent.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   signInButtonText: {
-    ...textStyle.button,
-    color: text.primary,
+    fontFamily: fontFamily.semiBold,
+    fontSize: 14,
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
 
   // ── Footer
@@ -496,55 +553,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing['2xl'],
+    marginTop: spacing.xl,
   },
   footerText: {
-    ...textStyle.body,
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
+    color: '#94A3B8',
   },
   registerLink: {
     fontFamily: fontFamily.semiBold,
-    fontSize: fontSize.base,
+    fontSize: 13,
     color: accent.primary,
-  },
-  webDownloadSection: {
-    marginTop: spacing.xl,
-    alignItems: 'center',
-    width: '100%',
-  },
-  webDivider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: spacing.md,
-  },
-  webDividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  webDividerText: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: 10,
-    letterSpacing: 1.5,
-    color: text.disabled,
-    paddingHorizontal: 12,
-  },
-  webApkButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: radius.md,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    width: '100%',
-  },
-  webApkButtonText: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: fontSize.sm,
-    color: text.primary,
   },
 });
