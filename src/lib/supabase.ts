@@ -33,6 +33,26 @@ export function resetSupabaseClient() {
   activeClient = createSupabaseInstance(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_ANON_KEY);
 }
 
+function createMockRealtimeChannel(topic: string = 'mock-channel') {
+  const channelObj: any = {
+    topic,
+    params: {},
+    subTopic: topic,
+    on: () => channelObj,
+    subscribe: (callback?: (status: string, err?: any) => void) => {
+      if (typeof callback === 'function') {
+        try {
+          callback('SUBSCRIBED');
+        } catch {}
+      }
+      return channelObj;
+    },
+    unsubscribe: async () => 'ok',
+    send: async () => 'ok',
+  };
+  return channelObj;
+}
+
 export const supabase: SupabaseClient<Database> = new Proxy({} as SupabaseClient<Database>, {
   get(_target, prop) {
     if (prop === 'auth') {
@@ -82,13 +102,19 @@ export const supabase: SupabaseClient<Database> = new Proxy({} as SupabaseClient
         return (table: string) => GuestModeService.createQuery(table);
       }
       if (prop === 'channel') {
-        return () => ({
-          on: () => ({ subscribe: () => ({}) }),
-          subscribe: () => ({}),
-        });
+        return (topic: string) => createMockRealtimeChannel(topic);
       }
       if (prop === 'removeChannel') {
-        return async () => {};
+        return async (_channel: any) => 'ok';
+      }
+      if (prop === 'removeAllChannels') {
+        return async () => [];
+      }
+      if (prop === 'getChannels') {
+        return () => [];
+      }
+      if (prop === 'rpc') {
+        return async () => ({ data: null, error: null });
       }
     }
 

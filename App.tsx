@@ -249,7 +249,7 @@ export default function App() {
           <RegisterScreen
             onNavigateToLogin={() => setCurrentScreen("login")}
             onRegisterSuccess={() => setCurrentScreen("login")}
-            onLaunchSandbox={() => {
+            onLaunchGuestMode={() => {
               GuestModeService.enable();
               setIsAuthenticated(true);
             }}

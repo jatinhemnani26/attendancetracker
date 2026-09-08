@@ -166,12 +166,12 @@ export default function LoginScreen({
           </View>
           <View style={styles.webTopActions}>
             <TouchableOpacity
-              style={[styles.webPillBtn, styles.webDemoPillBtn]}
+              style={styles.webPillBtn}
               onPress={handleEnterGuestMode}
               activeOpacity={0.8}
             >
-              <Ionicons name="flash" size={13} color="#F59E0B" />
-              <Text style={styles.webDemoPillText}>Demo Sandbox</Text>
+              <Ionicons name="sparkles-outline" size={12} color="#94A3B8" />
+              <Text style={styles.webPillText}>Guest Mode</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -430,15 +430,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
-  },
-  webDemoPillBtn: {
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-    borderColor: 'rgba(245, 158, 11, 0.35)',
-  },
-  webDemoPillText: {
-    color: '#FDE68A',
-    fontSize: 12,
-    fontFamily: fontFamily.semiBold,
   },
   webPillBtnActive: {
     borderColor: 'rgba(16, 185, 129, 0.4)',

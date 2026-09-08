@@ -37,13 +37,13 @@ import { GuestModeService } from '../../services/GuestModeService';
 interface RegisterScreenProps {
   onNavigateToLogin: () => void;
   onRegisterSuccess: () => void;
-  onLaunchSandbox?: () => void;
+  onLaunchGuestMode?: () => void;
 }
 
 export default function RegisterScreen({
   onNavigateToLogin,
   onRegisterSuccess,
-  onLaunchSandbox,
+  onLaunchGuestMode,
 }: RegisterScreenProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -60,10 +60,10 @@ export default function RegisterScreen({
     BYODBService.getActiveConfig().then((cfg) => setIsCustomDb(cfg.isCustom));
   }, []);
 
-  const handleLaunchSandbox = () => {
+  const handleLaunchGuestMode = () => {
     GuestModeService.enable();
-    if (onLaunchSandbox) {
-      onLaunchSandbox();
+    if (onLaunchGuestMode) {
+      onLaunchGuestMode();
     } else {
       onRegisterSuccess();
     }
@@ -200,48 +200,48 @@ export default function RegisterScreen({
               </View>
 
               <View style={styles.capacityBadge}>
-                <Ionicons name="lock-closed" size={13} color="#F59E0B" />
-                <Text style={styles.capacityBadgeText}>BETA CAPACITY REACHED</Text>
+                <Ionicons name="shield-outline" size={12} color="#94A3B8" />
+                <Text style={styles.capacityBadgeText}>PRIVATE BETA • CAPACITY PAUSED</Text>
               </View>
 
               <Text style={styles.restrictedTitle}>Public Registration Paused</Text>
               <Text style={styles.restrictedSubtitle}>
-                To preserve low latency and isolated resource limits for verified early users, direct account creation on our shared cloud cluster is currently closed.
+                Attendance Tracker is currently in private testing for enrolled campus cohorts. To guarantee reliable real-time sync and isolated resources for verified testers, direct sign-ups on our shared community cluster are paused.
               </Text>
 
-              {/* Action Box 1: Demo Sandbox */}
+              {/* Option 1: Guest Mode */}
               <View style={styles.optionBox}>
                 <View style={styles.optionHeader}>
-                  <View style={[styles.optionIconBadge, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-                    <Ionicons name="flash" size={18} color="#F59E0B" />
+                  <View style={[styles.optionIconBadge, { backgroundColor: 'rgba(99, 102, 241, 0.12)' }]}>
+                    <Ionicons name="sparkles" size={17} color="#818CF8" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.optionTitle}>Ephemeral Demo Sandbox</Text>
+                    <Text style={styles.optionTitle}>Explore in Guest Mode</Text>
                     <Text style={styles.optionDesc}>
-                      Explore full dashboard, timetable, simulator, and campus map with pre-loaded mock subjects. Zero account needed — all changes stay in browser memory and disappear when tab closes.
+                      Test the complete app with realistic demo schedules, attendance calculations, safe bunk simulators, and interactive campus map. Stored strictly in your browser session and automatically cleared when you close the tab.
                     </Text>
                   </View>
                 </View>
                 <TouchableOpacity
-                  style={styles.sandboxActionBtn}
-                  onPress={handleLaunchSandbox}
+                  style={styles.guestActionBtn}
+                  onPress={handleLaunchGuestMode}
                   activeOpacity={0.85}
                 >
-                  <Ionicons name="play" size={14} color="#0F172A" />
-                  <Text style={styles.sandboxActionBtnText}>Launch Demo Sandbox</Text>
+                  <Ionicons name="sparkles-outline" size={14} color="#FFFFFF" />
+                  <Text style={styles.guestActionBtnText}>Launch Guest Mode</Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Action Box 2: BYODB */}
+              {/* Option 2: BYODB */}
               <View style={styles.optionBox}>
                 <View style={styles.optionHeader}>
-                  <View style={[styles.optionIconBadge, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
-                    <Ionicons name="server-outline" size={18} color="#10B981" />
+                  <View style={[styles.optionIconBadge, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                    <Ionicons name="server-outline" size={17} color="#34D399" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.optionTitle}>Bring Your Own Database (BYODB)</Text>
                     <Text style={styles.optionDesc}>
-                      Deploy your own free Supabase project with 100% private data isolation. Once connected, registration unlocks instantly.
+                      Prefer persistent cloud storage? Connect your own free Supabase project. You get 100% private data isolation, unlimited accounts, and full control over your database.
                     </Text>
                   </View>
                 </View>
@@ -251,8 +251,8 @@ export default function RegisterScreen({
                     onPress={() => setShowByodbModal(true)}
                     activeOpacity={0.85}
                   >
-                    <Ionicons name="key-outline" size={14} color="#10B981" />
-                    <Text style={styles.byodbActionBtnText}>Configure Custom DB</Text>
+                    <Ionicons name="key-outline" size={14} color="#E2E8F0" />
+                    <Text style={styles.byodbActionBtnText}>Connect Database</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -272,9 +272,12 @@ export default function RegisterScreen({
                 onPress={onNavigateToLogin}
                 activeOpacity={0.85}
               >
-                <Ionicons name="arrow-back" size={16} color="#94A3B8" />
-                <Text style={styles.backToLoginText}>Back to Sign In</Text>
+                <Ionicons name="arrow-back" size={15} color="#94A3B8" />
+                <Text style={styles.backToLoginText}>Return to Sign In</Text>
               </TouchableOpacity>
+              <Text style={styles.footerNoteText}>
+                Existing beta testers can sign in directly with their approved credentials.
+              </Text>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -709,18 +712,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.35)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 20,
   },
   capacityBadgeText: {
-    color: '#FDE68A',
+    color: '#94A3B8',
     fontSize: 11,
-    fontFamily: fontFamily.bold,
-    letterSpacing: 0.5,
+    fontFamily: fontFamily.semiBold,
+    letterSpacing: 0.6,
   },
   restrictedTitle: {
     fontFamily: fontFamily.bold,
@@ -770,21 +773,24 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: '#94A3B8',
   },
-  sandboxActionBtn: {
+  guestActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#4F46E5',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 10,
-    paddingVertical: 11,
+    paddingVertical: 12,
     paddingHorizontal: 16,
     marginTop: 4,
   },
-  sandboxActionBtnText: {
-    color: '#0F172A',
+  guestActionBtnText: {
+    color: '#FFFFFF',
     fontSize: 13,
-    fontFamily: fontFamily.bold,
+    fontFamily: fontFamily.semiBold,
+    letterSpacing: 0.2,
   },
   byodbRow: {
     flexDirection: 'row',
@@ -797,26 +803,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.35)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
   byodbActionBtnText: {
-    color: '#10B981',
+    color: '#F1F5F9',
     fontSize: 12,
-    fontFamily: fontFamily.semiBold,
+    fontFamily: fontFamily.medium,
   },
   guideActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 14,
@@ -839,6 +845,13 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 13,
     fontFamily: fontFamily.medium,
+  },
+  footerNoteText: {
+    color: '#64748B',
+    fontSize: 11,
+    fontFamily: fontFamily.regular,
+    textAlign: 'center',
+    marginTop: -4,
   },
   customDbNotice: {
     flexDirection: 'row',
