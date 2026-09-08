@@ -1,126 +1,157 @@
-# 🎓 Attendance Tracker & Campus GIS Wayfinding System
+# 🎓 Attendance Tracker & Campus GIS System
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React Native](https://img.shields.io/badge/React_Native-0.86-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo_SDK-57-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
 [![EAS Update](https://img.shields.io/badge/EAS_Update-Live_OTA-success?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
-[![Supabase](https://img.shields.io/badge/Supabase-Database_%26_Auth-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-> **A sub-meter campus GIS navigation and academic tracking engine featuring affine coordinate georeferencing, Dijkstra graph pathfinding, and real-time map-matching sensor fusion.**
+An all-in-one **academic operating system and indoor/outdoor campus navigation engine** for university students. Combines real-time attendance compliance monitoring, bunk forecasting, timetable automation, and a custom architectural GIS wayfinding engine with road-snapped GPS tracking.
 
 ---
 
-## 📌 Architectural Overview
+## 📱 Visual Showcase
 
-Traditional commercial map services (Google Maps, OpenStreetMap) fail in university campuses: architectural blueprints are private, outdoor satellite imagery lacks granular internal corridors/walkways, and mobile GPS suffers 15–90m multipath reflections near reinforced concrete blocks.
-
-This system bridges that gap with a **closed-loop geospatial architecture**:
-1. **Desktop CAD GIS Studio (`tools/CampusRouteStudio.html`)**: An interactive in-browser vector drafting suite for tracing 2D building geometries, arterial road polylines, doorstep connectors, and field-calibrating ground-truth GPS coordinates.
-2. **Mobile Wayfinding Engine (`app/`)**: A production-grade React Native application running real-time Kalman/EMA smoothing, affine georeferencing, orthogonal road-snapping, and an adaptive residual bias learning loop.
-
-```
-Raw Phone GPS Telemetry (Lat, Lng, Accuracy, Speed, Heading)
-                            │
-                            ▼
-              ┌───────────────────────────┐
-              │  Outlier & Spike Filter   │  <-- Rejects accuracy > 40m & velocity jumps
-              └─────────────┬─────────────┘
-                            │
-                            ▼
-              ┌───────────────────────────┐
-              │ Affine Transform (3x3 M)  │  <-- Projects WGS84 (Lat, Lng) -> SVG Canvas (X, Y)
-              └─────────────┬─────────────┘
-                            │
-                            ▼
-              ┌───────────────────────────┐
-              │   EMA Smoothing Filter    │  <-- Low-pass filter (prevents avatar vibration)
-              └─────────────┬─────────────┘
-                            │
-                            ▼
-              ┌───────────────────────────┐
-              │ Map-Matching Road Snapper │  <-- Orthogonal vector projection to walkways
-              └─────────────┬─────────────┘
-                            │
-              ┌─────────────┴─────────────┐
-              ▼                           ▼
-┌───────────────────────────┐   ┌───────────────────────────┐
-│ Reanimated 60 FPS View    │   │ Adaptive Bias Learner     │
-│ - Isometric 3D Extrusions │   │ - Corrects shadow drift   │
-│ - Dijkstra Pathfinding    │   │ - Saves to AsyncStorage   │
-└───────────────────────────┘   └───────────────────────────┘
-```
-
----
-
-## 📸 Visual Showcase
-
-| Live Campus Navigation | CAD Route Studio |
+| Home Dashboard & Metrics | Weekly Timetable & Alerts |
 |:---:|:---:|
-| <img src="docs/screenshots/mobile_navigation.png" width="400" alt="Mobile Navigation UI" /> | <img src="docs/screenshots/studio_overview.png" width="400" alt="Campus Route Studio" /> |
-| *Real-time position tracking with orientation cone & Dijkstra path* | *Sub-pixel vector drafting & affine matrix calibration* |
+| <img src="docs/screenshots/dashboard.jpg" width="340" alt="Attendance Dashboard UI" /> | <img src="docs/screenshots/timetable.jpg" width="340" alt="Weekly Timetable UI" /> |
+| *Master attendance gauge, institutional target thresholds, and live KPI summary* | *Daily class timeline, teacher initials, and floating navigation launcher* |
+
+| Vector Campus Map & 3D Extrusion | Attendance Heatmap Calendar |
+|:---:|:---:|
+| <img src="docs/screenshots/campus_map.jpg" width="340" alt="Campus GIS Map UI" /> | <img src="docs/screenshots/analytics_heatmap.jpg" width="340" alt="Analytics Heatmap UI" /> |
+| *Custom architectural blueprint with physical walkways and deep room search* | *Color-coded monthly attendance grid tracking daily attendance patterns* |
 
 ---
 
-## ⚡ Core Engineering Highlights
+## 🚀 Core Features
 
-### 1. High-Precision Affine Transformation Matrix
-Translates non-linear WGS84 geographic coordinates $(\text{lng}, \text{lat})$ into local SVG architectural coordinates $(x, y)$ using a calibrated transformation matrix:
+### 1. Attendance Engine & What-If Bunk Simulator
+- **Master Compliance Gauge:** Real-time circular dial showing overall percentage against university mandatory thresholds (e.g., 75% minimum).
+- **KPI Summary Cards:** Live counters for Attended, Conducted, Missed, and Cancelled lectures with semester-level filtering.
+- **Predictive Bunk Simulator (`AttendanceSimulatorSheet.tsx`):** In-memory sandbox to forecast the exact mathematical impact of future class decisions before skipping:
+  - **Safe Bunks:** Calculates exactly how many classes you can skip without falling below the 75% requirement.
+  - **Recovery Count:** Calculates consecutive attendances required to recover from a low percentage.
+- **Live Class Stopwatch Timer (`StopwatchTimerBanner.tsx`):** Real-time counter monitoring ongoing lecture duration with active status banners.
+
+### 2. Analytics & Monthly Attendance Heatmap
+- **Daily Status Heatmap (`AnalyticsScreen.tsx`):** GitHub-style monthly calendar view color-coded by daily attendance:
+  - 🟢 **100% Attended** (Full green)
+  - 🟡 **Partial Attendance** (Lime / Orange)
+  - 🔴 **0% / Absent** (Red)
+  - 🟣 **College Off / Holiday** (Dark purple)
+  - 🟠 **Sundays / Weekends** (Yellow)
+- **Subject-Wise Analytics:** Granular drill-down displaying individual subject percentages, professor details, and required classes.
+
+### 3. Weekly Timetable & Smart Alerts
+- **Interactive Day-by-Day Schedule (`TimetableScreen.tsx`):** Clean weekday timeline (Mon–Sat) showing subject codes, faculty tags, and exact classroom numbers.
+- **Pre-Class Push Notifications (`NotificationService.ts`):** Automated local background alerts delivered 10 minutes before every lecture with subject name, room number, and teacher info.
+- **Timetable Versions:** Support for alternating lab batches, exam schedules, and odd/even semester configurations.
+
+### 4. Academic Tasks & Deadlines (`TaskService.ts`)
+- Integrated task tracker for university assignments, project deadlines, quizzes, and exams.
+- Categorized by urgency, subject relation, and completion state with Supabase sync.
+
+### 5. Campus GIS Navigation & Turn-by-Turn Wayfinding
+- **2D/3D Isometric Architectural Canvas (`CampusSvgCanvas.tsx`):** Custom dark-mode SVG rendering of 23 campus buildings with extruded 3D heights, walkways, and campus amenities.
+- **Deep Room & Lab Directory (`IndoorDirectories.ts`):** Multi-floor room finder covering engineering labs, departmental libraries, seminar halls, and faculty cabins.
+- **Dijkstra Shortest-Path Graph (`MapGraph.ts`):** 87 nodes and 95 interconnected edges providing 100% pathfinding reachability between every building on campus while strictly routing around building perimeters.
+- **Walkway-Snapped GPS Engine (`LocationService.ts`):**
+  - **Affine Transformation:** Converts standard GPS $(\text{Latitude}, \text{Longitude})$ coordinates to local blueprint $(X, Y)$ canvas coordinates via an empirical $3 \times 3$ transformation matrix.
+  - **Outlier Gate:** Discards low-accuracy satellite fixes ($> 40\text{m}$) and impossible speed jumps.
+  - **Adaptive EMA Smoothing:** Low-pass Exponential Moving Average filter ($x_{\text{smooth}} = \alpha x_{\text{new}} + (1-\alpha) x_{\text{prev}}$) ensuring the location avatar glides without jitter.
+  - **Orthogonal Road Snapper:** Vector-projects location updates onto the nearest physical walkway centerline within 19 meters so the avatar never cuts through building walls.
+  - **Empirical Bias Learning:** Stores localized building shadow adjustments in `AsyncStorage` whenever attendance is marked at a known doorway.
+
+### 6. Interactive CAD GIS Studio (`tools/CampusRouteStudio.html`)
+- A standalone in-browser vector CAD suite built for map architects:
+  - Interactive polyline routing with insert, drag, and delete waypoint controls.
+  - Ground-truth GPS calibration mapping.
+  - Live Dijkstra graph inspector with connectivity diagnostics.
+
+### 7. Security, Auth & Offline-First Persistence
+- **Biometric App Lock (`SecurityService.ts`):** Fingerprint and Face ID authentication via `expo-local-authentication` to secure academic records.
+- **Offline-First Storage:** Local persistence via `@react-native-async-storage/async-storage` with seamless background sync to Supabase PostgreSQL.
+
+---
+
+## 📐 Mathematical Grounding (GIS Engine)
+
+### 1. Affine Coordinate Georeferencing
+Transforms WGS84 geographic coordinates $(\text{lng}, \text{lat})$ into 2D SVG canvas pixels $(x, y)$:
 
 $$\begin{bmatrix} x \\ y \\ 1 \end{bmatrix} = \begin{bmatrix} a & b & c \\ d & e & f \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} \text{lng} \\ \text{lat} \\ 1 \end{bmatrix}$$
 
-- Calibrated using 17 ground-truth field anchors across the campus.
-- Accounts for campus rotation, scale, skew, and local coordinate offsets.
+- Fitted using 17 ground-truth field anchors captured directly across campus buildings.
+- Handles campus blueprint rotation, scaling, and origin offsets without requiring third-party map tiling servers.
 
-### 2. Orthogonal Map-Matching (Road Snapping)
-To prevent the user's position indicator from wandering through walls or floating over rooftops due to satellite noise, every coordinate is orthogonally projected onto the nearest active walkway edge:
+### 2. Orthogonal Road Snapping
+Projects the smoothed user coordinate $\mathbf{p}$ onto the nearest walkway line segment between nodes $\mathbf{n}_1$ and $\mathbf{n}_2$:
 
-$$\mathbf{p}_{\text{proj}} = \mathbf{n}_1 + t (\mathbf{n}_2 - \mathbf{n}_1), \quad t = \text{clamp}\left( \frac{(\mathbf{p} - \mathbf{n}_1) \cdot (\mathbf{n}_2 - \mathbf{n}_1)}{\|\mathbf{n}_2 - \mathbf{n}_1\|^2}, 0, 1 \right)$$
+$$t = \text{clamp}\left( \frac{(\mathbf{p} - \mathbf{n}_1) \cdot (\mathbf{n}_2 - \mathbf{n}_1)}{\|\mathbf{n}_2 - \mathbf{n}_1\|^2}, 0, 1 \right)$$
 
-If the perpendicular distance $\|\mathbf{p} - \mathbf{p}_{\text{proj}}\| \le 38\text{px}$ ($\approx 19\text{m}$), the avatar snaps dead-center to the physical road.
+$$\mathbf{p}_{\text{snapped}} = \mathbf{n}_1 + t (\mathbf{n}_2 - \mathbf{n}_1)$$
 
-### 3. Adaptive "Robot" Residual Bias Learning
-Different areas of campus suffer from asymmetrical satellite shadowing (e.g. multi-story workshops blocking signals from the west). 
-- Every time a student marks attendance or reaches an entrance door, the system compares ground-truth coordinates with telemetry.
-- Computes residual bias $(\Delta x, \Delta y)$ and blends it into local calibration memory via recursive updating, making the map progressively more accurate with every use.
-
-### 4. 100% Deterministic Dijkstra Routing
-- **87 Waypoint Nodes & 95 Interconnected Edges** spanning 11 curated arterial roads and exact doorstep connectors.
-- Automated tests verify **100% reachability (22/22 buildings)** with sub-2ms pathfinding latency.
+If $\|\mathbf{p} - \mathbf{p}_{\text{snapped}}\| \le 38\text{px}$ ($\approx 19\text{m}$), the avatar snaps directly to the road centerline.
 
 ---
 
-## 🛠️ Project Structure
+## 🗂️ Project Structure
 
 ```
-├── assets/                  # Icons, splash screens, blueprint overlays
+├── assets/                          # App icons, splash screens, and blueprint assets
 ├── docs/
-│   └── screenshots/         # Production UI screenshots & architectural diagrams
+│   └── screenshots/                 # Production app screenshots
+│       ├── dashboard.jpg            # Attendance dashboard & gauge
+│       ├── timetable.jpg            # Weekly schedule & classes
+│       ├── campus_map.jpg           # GIS map with road networks
+│       └── analytics_heatmap.jpg    # Monthly attendance heatmap
 ├── src/
 │   ├── components/
-│   │   ├── AttendanceSimulatorSheet.tsx  # In-memory what-if bunk simulator
-│   │   ├── StopwatchTimerBanner.tsx      # Lecture duration & countdown timer
+│   │   ├── AttendanceGauge.tsx      # Master circular compliance dial
+│   │   ├── AttendanceSimulatorSheet.tsx # In-memory what-if bunk forecasting
+│   │   ├── StopwatchTimerBanner.tsx # Live lecture duration tracker
+│   │   ├── TaskSheet.tsx            # Academic deadline & assignment manager
 │   │   └── map/
-│   │       ├── CampusSvgCanvas.tsx       # 60 FPS animated SVG canvas with 3D extrusion
-│   │       └── BuildingDetailSheet.tsx   # Glassmorphic floor directory & directions
+│   │       ├── CampusSvgCanvas.tsx  # 60 FPS animated vector canvas with 3D extrusions
+│   │       └── BuildingDetailSheet.tsx # Multi-floor room directory & directions
 │   ├── data/
-│   │   ├── CampusBuildings.ts            # 23 buildings, polygons, & physical walkways
-│   │   ├── MapGraph.ts                   # 87 graph nodes & 95 topological edges
-│   │   └── IndoorDirectories.ts          # Multi-floor room directories & labs
+│   │   ├── CampusBuildings.ts       # 23 buildings, polygons, and physical road paths
+│   │   ├── MapGraph.ts              # 87 graph nodes & 95 topological edges
+│   │   └── IndoorDirectories.ts     # Multi-floor room, lab, and cabin directory
 │   ├── screens/
+│   │   ├── auth/                    # Login, Register, Forgot Password, Biometric Lock
 │   │   └── main/
-│   │       ├── CampusMapScreen.tsx       # Real-time navigation & gesture viewport
-│   │       ├── DashboardScreen.tsx       # Attendance cards & timetable overview
-│   │       └── AnalyticsScreen.tsx       # Subject statistics & attendance forecasting
+│   │       ├── DashboardScreen.tsx  # KPI cards, today's schedule, and timetable
+│   │       ├── AnalyticsScreen.tsx  # Monthly calendar heatmap & subject statistics
+│   │       ├── TimetableScreen.tsx  # Weekly schedule manager
+│   │       ├── SubjectsScreen.tsx   # Subject catalog & thresholds
+│   │       └── CampusMapScreen.tsx  # Real-time navigation & gesture map
 │   ├── services/
-│   │   ├── LocationService.ts            # Affine matrix, road snapping, EMA smoother
-│   │   ├── PathfindingService.ts         # Dijkstra shortest-path navigation
-│   │   ├── DatabaseService.ts            # Supabase PostgreSQL data persistence
-│   │   └── SyncService.ts                # Offline-first bidirectional synchronization
-│   └── theme/                            # Color tokens, typography, and spacing
+│   │   ├── LocationService.ts       # Affine matrix, road snapping, and EMA filter
+│   │   ├── PathfindingService.ts    # Dijkstra shortest-path navigation
+│   │   ├── NotificationService.ts   # Pre-class local push notifications
+│   │   ├── DatabaseService.ts       # Supabase PostgreSQL data persistence
+│   │   └── SyncService.ts           # Offline-first bidirectional sync
+│   └── theme/                       # Design tokens (colors, typography, spacing)
 └── tools/
-    └── CampusRouteStudio.html            # Standalone CAD GIS Wayfinding Studio
+    └── CampusRouteStudio.html       # Web-based CAD GIS Map Drafting Studio
 ```
+
+---
+
+## ⚡ Tech Stack
+
+| Domain | Technology | Purpose |
+|---|---|---|
+| **Mobile Framework** | React Native 0.86, Expo SDK 57 | Cross-platform native runtime |
+| **Language** | TypeScript 5.0+ | End-to-end type safety |
+| **Vector Graphics** | React Native SVG, Reanimated 4 | 60 FPS animated blueprint & 3D extrusion |
+| **Navigation & Math** | Custom Dijkstra Graph, Vector Projection | Sub-2ms pathfinding & road snapping |
+| **Hardware & Sensors** | Expo Location, Expo Notifications, Expo Local Authentication | GPS telemetry, push alerts, biometrics |
+| **Backend & Sync** | Supabase (PostgreSQL), AsyncStorage | Cloud data sync with offline-first caching |
+| **Deployment** | Expo EAS Update | Instant Over-The-Air (OTA) production updates |
 
 ---
 
@@ -129,38 +160,25 @@ Different areas of campus suffer from asymmetrical satellite shadowing (e.g. mul
 ### Prerequisites
 - Node.js 20+
 - npm or yarn
-- Expo Go / Android Studio / Xcode
+- Expo Go app or Android/iOS simulator
 
-### Installation
+### Setup & Run
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/jatinhemnani26/attendancetracker.git
 cd attendancetracker
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Start local Metro bundler
+# 3. Start local development server
 npx expo start
 ```
 
-### Running the CAD Studio
-Open `tools/CampusRouteStudio.html` in any modern browser:
-- Draft road waypoints and doorways directly on campus blueprints.
-- Test Dijkstra pathfinding in real-time.
-- Export curated network payloads directly into the mobile data layer.
-
-### Over-The-Air (OTA) Updates
-The project is configured with **EAS Update** for instant hot-reloads without rebuilding native binaries:
-```bash
-# Deploy to production channel
-npx eas-cli update --branch production --environment production --message "Update description"
-
-# Deploy to preview channel
-npx eas-cli update --branch preview --environment preview --message "Update description"
-```
+### Running the Web CAD Studio
+Open `tools/CampusRouteStudio.html` directly in any web browser to view, calibrate, or export campus road networks and waypoint graphs.
 
 ---
 
 ## 📄 License
-This project is open-source under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
