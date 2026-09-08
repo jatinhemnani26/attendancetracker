@@ -9,20 +9,8 @@
 
 <p align="center">
   <a href="https://expo.dev/artifacts/eas/AG27TWjpYW4S5nDgj3rdnxvSPS_0tAwvh6RN1vT_pqg.apk">
-    <img src="docs/download_apk_banner.svg" width="760" alt="Download Attendance Tracker Android APK" />
+    <img src="docs/download_button.svg" width="340" alt="Download Attendance Tracker Android APK" />
   </a>
-</p>
-
-<p align="center">
-  <a href="https://expo.dev/artifacts/eas/AG27TWjpYW4S5nDgj3rdnxvSPS_0tAwvh6RN1vT_pqg.apk">
-    <img src="https://img.shields.io/badge/Direct_Install-Android_APK_(v1.0.0)-10B981?style=for-the-badge&logo=android&logoColor=white&labelColor=064E3B" alt="Direct APK Download" />
-  </a>
-  &nbsp;
-  <a href="https://expo.dev/accounts/jathit2645/projects/attendance-tracker/builds/e94c6310-f3a6-4d58-893c-6f9bee89b495">
-    <img src="https://img.shields.io/badge/EAS_Build-Verified_Artifact_✓-6366F1?style=for-the-badge&logo=expo&logoColor=white&labelColor=1E1B4B" alt="Verified EAS Build" />
-  </a>
-  &nbsp;
-  <img src="https://img.shields.io/badge/Release-Universal_APK-0EA5E9?style=for-the-badge&logo=googleplay&logoColor=white&labelColor=082F49" alt="Universal Android Build" />
 </p>
 
 An all-in-one **academic operating system and indoor/outdoor campus navigation engine** for university students. Combines real-time attendance compliance monitoring, bunk forecasting, timetable automation, and a custom architectural GIS wayfinding engine with road-snapped GPS tracking.
