@@ -1,6 +1,9 @@
 # 🎓 Attendance Tracker & Campus GIS System
 ### 🏆 College Website & Web Application Competition Submission
 
+> 🌐 **Live Production Web App:** [https://attendancetracker26.vercel.app/](https://attendancetracker26.vercel.app/)  
+> *(Click **"Guest Mode"** in the top-right header for instant 1-click access with sample data!)*
+
 ---
 
 ## 📌 Executive Summary
