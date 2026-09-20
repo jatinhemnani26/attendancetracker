@@ -9,6 +9,7 @@ import AttendanceGauge from "./AttendanceGauge";
 
 export interface AttendanceSimulatorSheetProps {
   subject: any;
+  records?: any[];
 }
 
 export interface AttendanceSimulatorSheetRef {
@@ -17,14 +18,16 @@ export interface AttendanceSimulatorSheetRef {
 }
 
 const AttendanceSimulatorSheet = forwardRef<AttendanceSimulatorSheetRef, AttendanceSimulatorSheetProps>(
-  ({ subject }, ref) => {
+  ({ subject, records }, ref) => {
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+    const [classTypeFilter, setClassTypeFilter] = useState<'all' | 'theory' | 'lab' | 'tutorial'>('all');
 
     useImperativeHandle(ref, () => ({
       present: () => {
         // Reset state on open
         setSimAttended(0);
         setSimMissed(0);
+        setClassTypeFilter('all');
         setTimeout(() => bottomSheetModalRef.current?.present(), 0);
       },
       dismiss: () => {
@@ -32,7 +35,7 @@ const AttendanceSimulatorSheet = forwardRef<AttendanceSimulatorSheetRef, Attenda
       },
     }));
 
-    const snapPoints = useMemo(() => ["80%"], []);
+    const snapPoints = useMemo(() => ["85%"], []);
     const [simAttended, setSimAttended] = useState(0);
     const [simMissed, setSimMissed] = useState(0);
 
@@ -44,8 +47,23 @@ const AttendanceSimulatorSheet = forwardRef<AttendanceSimulatorSheetRef, Attenda
     );
 
     const threshold = subject ? (subject.threshold || subject.target_threshold || 75) : 75;
-    const initialConducted = subject ? (subject.totalConducted || 0) : 0;
-    const initialAttended = subject ? (subject.totalAttended || 0) : 0;
+    
+    // Derive initial counts based on classTypeFilter
+    const { initialConducted, initialAttended } = useMemo(() => {
+      if (!subject) return { initialConducted: 0, initialAttended: 0 };
+      if (classTypeFilter === 'all' || !records || records.length === 0) {
+        return {
+          initialConducted: subject.totalConducted || 0,
+          initialAttended: subject.totalAttended || 0,
+        };
+      }
+      const matchingRecords = records.filter(
+        (r) => r.subject_id === subject.id && (r.class_type || 'theory').toLowerCase() === classTypeFilter
+      );
+      const conducted = matchingRecords.filter((r) => r.status !== 'cancelled').length;
+      const attended = matchingRecords.filter((r) => r.status === 'present').length;
+      return { initialConducted: conducted, initialAttended: attended };
+    }, [subject, records, classTypeFilter]);
 
     const simTotalConducted = initialConducted + simAttended + simMissed;
     const simTotalAttended = initialAttended + simAttended;
@@ -94,6 +112,31 @@ const AttendanceSimulatorSheet = forwardRef<AttendanceSimulatorSheetRef, Attenda
           <View style={styles.header}>
             <Text style={styles.title}>Simulator</Text>
             <Text style={styles.subtitle}>{subject.name || subject.short_name}</Text>
+          </View>
+
+          {/* Session Type Filter Pills */}
+          <View style={styles.filterRow}>
+            {(['all', 'theory', 'lab', 'tutorial'] as const).map((type) => {
+              const isActive = classTypeFilter === type;
+              const label =
+                type === 'all' ? 'All' : type === 'lab' ? 'Lab' : type === 'theory' ? 'Theory' : 'Tutorial';
+              return (
+                <TouchableOpacity
+                  key={type}
+                  style={[styles.filterPill, isActive && styles.filterPillActive]}
+                  onPress={() => {
+                    setClassTypeFilter(type);
+                    setSimAttended(0);
+                    setSimMissed(0);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.filterPillText, isActive && styles.filterPillTextActive]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           <View style={styles.gaugeContainer}>
@@ -191,6 +234,35 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: textColors.secondary,
     marginTop: 4,
+  },
+  filterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+    backgroundColor: glass.medium,
+    padding: 4,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: border.default,
+  },
+  filterPill: {
+    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.full,
+  },
+  filterPillActive: {
+    backgroundColor: accent.primary,
+  },
+  filterPillText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.xs,
+    color: textColors.secondary,
+  },
+  filterPillTextActive: {
+    fontFamily: fontFamily.bold,
+    color: palette.white,
   },
   gaugeContainer: {
     alignItems: "center",
