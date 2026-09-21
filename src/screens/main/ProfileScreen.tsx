@@ -38,6 +38,7 @@ import {
 
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import * as Updates from "expo-updates";
 
 export default function ProfileScreen({ isActive = true }: { isActive?: boolean }) {
   const { height } = useWindowDimensions();
@@ -281,6 +282,75 @@ export default function ProfileScreen({ isActive = true }: { isActive?: boolean 
       }
     } catch (e: any) {
       Alert.alert("Failed to export CSV", e.message);
+    }
+  };
+
+  // --- In-App OTA Update Checker ---
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateStatusText, setUpdateStatusText] = useState("");
+
+  const handleCheckForUpdates = async () => {
+    if (Platform.OS === "web") {
+      Alert.alert(
+        "Live Web Version",
+        "You are using Attendance Tracker Web, which is always running the latest live build."
+      );
+      return;
+    }
+
+    if (__DEV__) {
+      Alert.alert(
+        "Development Mode",
+        "Updates cannot be fetched in local development mode."
+      );
+      return;
+    }
+
+    try {
+      setIsCheckingUpdate(true);
+      setUpdateStatusText("Checking update server...");
+
+      const check = await Updates.checkForUpdateAsync();
+      if (check.isAvailable) {
+        setUpdateStatusText("Downloading new update...");
+        Alert.alert(
+          "Update Available",
+          "A new update was found! Downloading in the background now...",
+          [{ text: "OK" }]
+        );
+        await Updates.fetchUpdateAsync();
+        setUpdateStatusText("Update downloaded! Ready to reload.");
+        Alert.alert(
+          "Update Ready",
+          "The new version has been downloaded. Reload the app to apply the updates now.",
+          [
+            {
+              text: "Restart App Now",
+              onPress: async () => {
+                await Updates.reloadAsync();
+              },
+            },
+            {
+              text: "Later",
+              style: "cancel",
+            },
+          ]
+        );
+      } else {
+        setUpdateStatusText("App is up to date");
+        Alert.alert(
+          "No Updates Available",
+          "You are already running the latest version (Runtime: 1.0.0)."
+        );
+      }
+    } catch (error: any) {
+      setUpdateStatusText("Check failed");
+      Alert.alert(
+        "Update Check Failed",
+        `Could not check for updates: ${error?.message || error}\n\nPlease check your internet connection and try again.`
+      );
+    } finally {
+      setIsCheckingUpdate(false);
     }
   };
 
@@ -678,6 +748,58 @@ export default function ProfileScreen({ isActive = true }: { isActive?: boolean 
               <Text style={[styles.actionText, { color: palette.red[500] }]}>
                 Delete Account permanently
               </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={textColors.tertiary}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* App & System Updates */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>APP & SYSTEM</Text>
+          <View style={styles.settingsGroup}>
+            <TouchableOpacity
+              style={[styles.actionRow, styles.settingItemLast]}
+              activeOpacity={0.7}
+              onPress={handleCheckForUpdates}
+              disabled={isCheckingUpdate}
+            >
+              <View
+                style={[
+                  styles.settingIconContainer,
+                  { backgroundColor: accent.primary + "20" },
+                ]}
+              >
+                {isCheckingUpdate ? (
+                  <ActivityIndicator size="small" color={accent.primary} />
+                ) : (
+                  <Ionicons
+                    name="cloud-download-outline"
+                    size={20}
+                    color={accent.primary}
+                  />
+                )}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.actionText}>Check for Updates</Text>
+                <Text
+                  style={{
+                    fontFamily: fontFamily.medium,
+                    fontSize: 11,
+                    color: updateStatusText.includes("fail")
+                      ? palette.red[400]
+                      : updateStatusText.includes("download")
+                      ? accent.primary
+                      : textColors.tertiary,
+                    marginTop: 2,
+                  }}
+                >
+                  {updateStatusText || "v1.0.0 • OTA Enabled"}
+                </Text>
+              </View>
               <Ionicons
                 name="chevron-forward"
                 size={20}
