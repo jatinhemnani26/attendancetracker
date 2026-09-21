@@ -207,9 +207,13 @@ export default function AnalyticsScreen({ isActive = true }: { isActive?: boolea
         });
       });
 
-      // Add months starting from July 2026 to current date
-      const startMonthDate = new Date(2026, 6, 1); // July 2026 (Month is 0-indexed)
-      let curr = new Date();
+      // Add individual calendar months from semester start (or 5 months prior) up to current date
+      const now = new Date();
+      const semStart = activeSem?.start_date
+        ? new Date(activeSem.start_date)
+        : new Date(now.getFullYear(), now.getMonth() - 5, 1);
+      const startMonthDate = new Date(semStart.getFullYear(), semStart.getMonth(), 1);
+      let curr = new Date(now.getFullYear(), now.getMonth(), 1);
       if (curr < startMonthDate) {
         curr = new Date(startMonthDate);
       }
@@ -229,8 +233,13 @@ export default function AnalyticsScreen({ isActive = true }: { isActive?: boolea
       }
 
       setPeriods(newPeriods);
-      if (!selectedPeriod || (selectedPeriod.type === 'semester' && activeSem && selectedPeriod.id !== `sem_${activeSem.id}`)) {
-        const defaultPeriod = newPeriods.find(p => activeSem && p.id === `sem_${activeSem.id}`) || newPeriods[0];
+      const currentMonthId = `m_${now.getFullYear()}_${now.getMonth()}`;
+      if (!selectedPeriod) {
+        const defaultPeriod =
+          newPeriods.find((p) => p.id === currentMonthId) ||
+          newPeriods.find((p) => p.type === "month") ||
+          (activeSem && newPeriods.find((p) => p.id === `sem_${activeSem.id}`)) ||
+          newPeriods[0];
         setSelectedPeriod(defaultPeriod);
       }
     } catch (error) {
