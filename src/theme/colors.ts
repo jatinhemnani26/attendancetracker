@@ -57,6 +57,7 @@ export const palette = {
     600: '#DC2626',
   },
   blue: {
+    400: '#60a5fa',
     500: '#3b82f6',
   },
   lime: {

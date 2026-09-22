@@ -39,17 +39,61 @@ jobs:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL || 'https://ieimaotamtsywkvflknb.supabase.co' }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllaW1hb3RhbXRzeXdrdmZsa25iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NTc3NzEsImV4cCI6MjEwMDEzMzc3MX0.l2cwbexUtleArDHdRhO-v0B-GC3RAcDgue-JRYRURBQ' }}
 
-      - name: Build Debug/Release APK with Gradle
+      - name: Configure Android for Standalone Release Build
+        run: |
+          node -e "
+            const fs = require('fs');
+
+            // 1. Ensure AppTheme in styles.xml has splashscreen background to prevent grey screen
+            const stylesPath = 'android/app/src/main/res/values/styles.xml';
+            if (fs.existsSync(stylesPath)) {
+              let styles = fs.readFileSync(stylesPath, 'utf8');
+              if (!styles.includes('android:windowBackground')) {
+                styles = styles.replace(
+                  '<item name=\"android:navigationBarColor\">@android:color/transparent</item>',
+                  '<item name=\"android:navigationBarColor\">@android:color/transparent</item>\n    <item name=\"android:windowBackground\">@color/splashscreen_background</item>'
+                );
+                fs.writeFileSync(stylesPath, styles, 'utf8');
+                console.log('Added android:windowBackground to styles.xml');
+              }
+            }
+
+            // 2. Ensure android/app/build.gradle configures release with debug signing
+            const buildGradlePath = 'android/app/build.gradle';
+            if (fs.existsSync(buildGradlePath)) {
+              let bg = fs.readFileSync(buildGradlePath, 'utf8');
+              if (!bg.includes('signingConfig signingConfigs.debug')) {
+                bg = bg.replace(/release\s*\{/, 'release {\n            signingConfig signingConfigs.debug');
+                fs.writeFileSync(buildGradlePath, bg, 'utf8');
+                console.log('Injected debug signing config into release build type');
+              }
+            }
+          "
+
+      - name: Build Standalone Release APK with Gradle
         working-directory: android
         env:
           GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m"
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon || ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease --no-daemon
 
-      - name: Upload APK Artifact
+      - name: Prepare APK for Artifact Upload
+        run: |
+          mkdir -p dist-apk
+          if [ -f "android/app/build/outputs/apk/release/app-release.apk" ]; then
+            cp android/app/build/outputs/apk/release/app-release.apk dist-apk/attendance-tracker.apk
+            echo "Release APK copied successfully to dist-apk/attendance-tracker.apk"
+          else
+            echo "Error: app-release.apk was not found!"
+            find android/app/build/outputs/apk/ -type f
+            exit 1
+          fi
+
+      - name: Upload Standalone Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: attendance-tracker-apk
-          path: android/app/build/outputs/apk/**/*.apk
-          retention-days: 7
+          name: attendance-tracker-release-apk
+          path: dist-apk/attendance-tracker.apk
+          retention-days: 14
+
