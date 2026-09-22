@@ -146,7 +146,7 @@ const chunkArray = (arr: any[], size: number) => {
 };
 
 export default function AnalyticsScreen({ isActive = true }: { isActive?: boolean }) {
-  const [activeSubTab, setActiveSubTab] = useState<"overview" | "quick_sim" | "planner">("overview");
+  const [activeSubTab, setActiveSubTab] = useState<"planner" | "overview" | "quick_sim">("planner");
   const [activeSemester, setActiveSemester] = useState<SemesterRow | null>(null);
 
   const [periods, setPeriods] = useState<TimePeriod[]>([]);
@@ -844,9 +844,9 @@ export default function AnalyticsScreen({ isActive = true }: { isActive?: boolea
         {/* Sub-Tab Switcher Pill Bar */}
         <View style={styles.subTabBar}>
           {[
-            { id: "overview", label: "Overview", icon: "bar-chart-outline" },
+            { id: "planner", label: "Calendar & Bunk Planner", icon: "calendar-outline" },
+            { id: "overview", label: "Insights & Matrix", icon: "bar-chart-outline" },
             { id: "quick_sim", label: "Quick Sim", icon: "flash-outline" },
-            { id: "planner", label: "Calendar Planner", icon: "calendar-outline" },
           ].map((tab) => {
             const isActive = activeSubTab === tab.id;
             return (
@@ -921,205 +921,7 @@ export default function AnalyticsScreen({ isActive = true }: { isActive?: boolea
           </View>
         </View>
 
-        {/* Calendar Heatmap Grids (Single Month or All Semester Months) */}
-        {activeMonths.map(({ year, monthIndex }, idx) => {
-          const calendarData = getCalendarMatrix(
-            year,
-            monthIndex,
-            records,
-            holidays,
-          );
-          const monthName = new Date(year, monthIndex).toLocaleString(
-            "default",
-            { month: "long", year: "numeric" },
-          );
-          const rows = chunkArray(calendarData, 7);
 
-          return (
-            <View key={idx} style={styles.monthSection}>
-              <Text style={styles.monthSectionTitle}>{monthName}</Text>
-              <View style={styles.heatmapCard}>
-                {/* Weekday Row Header */}
-                <View style={styles.weekdayRow}>
-                  {["S", "M", "T", "W", "T", "F", "S"].map((day, dIdx) => (
-                    <Text key={dIdx} style={styles.weekdayLabel}>
-                      {day}
-                    </Text>
-                  ))}
-                </View>
-
-                {/* Grid rows */}
-                <View style={styles.heatmapGrid}>
-                  {rows.map((week, weekIdx) => (
-                    <View key={weekIdx} style={styles.weekRow}>
-                      {week.map((day, dayIdx) => {
-                        const cellColor = getHeatmapColor(day.ratio);
-                        const hasDay = day.day !== null;
-                        const isSelected =
-                          selectedDay &&
-                          selectedDay.day === day.day &&
-                          selectedDay.dateStr === day.dateStr;
-
-                        return (
-                          <TouchableOpacity
-                            key={dayIdx}
-                            accessibilityLabel={hasDay ? `Select ${day.dateStr}` : undefined}
-                            accessibilityRole={hasDay ? "button" : undefined}
-                            activeOpacity={hasDay ? 0.7 : 1.0}
-                            disabled={!hasDay}
-                            onPress={() => setSelectedDay(day)}
-                            style={[
-                              styles.heatCell,
-                              { backgroundColor: cellColor },
-                              !hasDay && {
-                                borderColor: "transparent",
-                                backgroundColor: "transparent",
-                              },
-                              isSelected && {
-                                borderWidth: 2,
-                                borderColor: palette.white,
-                              },
-                            ]}
-                          >
-                            {hasDay && (
-                              <Text
-                                style={[
-                                  styles.dayNumberText,
-                                  day.ratio === -1 && {
-                                    color: textColors.tertiary,
-                                  },
-                                ]}
-                              >
-                                {day.day}
-                              </Text>
-                            )}
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  ))}
-                </View>
-
-                {/* Legend */}
-                <View style={styles.heatmapLegend}>
-                  <View style={styles.legendItem}>
-                    <View
-                      style={[
-                        styles.legendDot,
-                        { backgroundColor: attendanceColors.present.base },
-                      ]}
-                    />
-                    <Text style={styles.legendText}>100%</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <LinearGradient
-                      colors={[heat.limeHeat, heat.yellowHeat, heat.orangeHeat]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={[styles.legendDot, { width: 32 }]}
-                    />
-                    <Text style={styles.legendText}>Partial</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <View
-                      style={[
-                        styles.legendDot,
-                        { backgroundColor: gaugeColors.critical },
-                      ]}
-                    />
-                    <Text style={styles.legendText}>0%</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <View
-                      style={[
-                        styles.legendDot,
-                        { backgroundColor: glass.medium },
-                      ]}
-                    />
-                    <Text style={styles.legendText}>Off</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <View
-                      style={[
-                        styles.legendDot,
-                        { backgroundColor: "#eab308" },
-                      ]}
-                    />
-                    <Text style={styles.legendText}>Sunday</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          );
-        })}
-
-        {/* Selected Day Details Panel */}
-        {selectedDay && selectedDay.day !== null && (
-          <View style={styles.detailCard}>
-            <View style={styles.detailHeader}>
-              <Text style={styles.detailTitle}>
-                {new Date(selectedDay.dateStr + "T00:00:00").toLocaleDateString(
-                  "en-US",
-                  {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  },
-                )}
-              </Text>
-              <TouchableOpacity onPress={() => setSelectedDay(null)}>
-                <Ionicons name="close" size={18} color={textColors.secondary} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.detailRow}>
-              <Ionicons
-                name={
-                  selectedDay.ratio === -3
-                    ? "gift-outline"
-                    : selectedDay.ratio === -4
-                      ? "sunny"
-                      : selectedDay.ratio === -1
-                        ? "moon-outline"
-                        : selectedDay.ratio === 1
-                          ? "checkmark-circle-outline"
-                          : "warning-outline"
-                }
-                size={20}
-                color={
-                  getHeatmapColor(selectedDay.ratio) === "transparent"
-                    ? textColors.primary
-                    : getHeatmapColor(selectedDay.ratio)
-                }
-              />
-              <Text style={styles.detailStatusText}>
-                {selectedDay.ratio === -3
-                  ? "Official Holiday"
-                  : selectedDay.ratio === -4
-                    ? "Sunday"
-                    : selectedDay.ratio === -1
-                      ? "Weekend / Off"
-                      : `Attendance Ratio: ${Math.round(selectedDay.ratio * 100)}%`}
-              </Text>
-            </View>
-            {selectedDay.ratio >= 0 && (
-              <View style={styles.detailStats}>
-                <Text style={styles.detailSubtext}>Logged Lectures:</Text>
-                <Text style={styles.detailLectureLog}>
-                  {records
-                    .filter((r) => r.date === selectedDay.dateStr)
-                    .map((r) => {
-                      const subject = subjects.find(
-                        (s) => s.id === r.subject_id,
-                      );
-                      const icon = r.status === "present" ? "✅" : "❌";
-                      return `• ${subject?.name || "Unknown"}: ${icon} ${r.status.toUpperCase()} (${r.duration_minutes || 0} min)`;
-                    })
-                    .join("\n") || "No records found for this day."}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
 
         {/* Faculty Insights (Canonical Semester Sourced) */}
         {facultyInsightsData.length > 0 && (
